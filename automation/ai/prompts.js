@@ -402,27 +402,6 @@ Replace the following placeholders with actual values:
 - List development priorities
 - Update progress summary with correct task counts
 
-## Response Format
-Please respond with:
-
-\`\`\`json
-{
-  "status": "validated|updated|failed",
-  "placeholders_replaced": 15,
-  "tasks_count": 110,
-  "structure_valid": true,
-  "customization_complete": true,
-  "validation_passed": true,
-  "updates_made": [
-    "Replaced [GAME_NAME] with actual name",
-    "Updated game type to ${gameConfig.gameType}",
-    "Customized tasks for ${gameConfig.primaryGenre} genre"
-  ],
-  "issues_found": [],
-  "next_steps": "Orchestrator validated and updated successfully"
-}
-\`\`\`
-
 ## Important Instructions
 - **DIRECTLY UPDATE THE ORCHESTRATOR FILE** - don't just report, actually modify the file
 - Replace ALL placeholders with appropriate values
