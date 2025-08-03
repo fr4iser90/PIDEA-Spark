@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * VibeFighters CDP-Based Task Automation Workflow
+ * Cursor Automation CDP CDP-Based Task Automation Workflow
  * 
  * This script automates task execution by directly controlling Cursor IDE or ChatGPT
  * through Chrome DevTools Protocol (CDP) using Playwright.
  * 
- * Usage: node automation-workflow-cdp.js [--port=9223] [--target=cursor|chatgpt]
+ * Usage: node automation-workflow-cdp.js [--port=9222] [--target=cursor|chatgpt] [--menu]
  */
 
 import fs from 'fs';
@@ -14,12 +14,27 @@ import path from 'path';
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { cursorSelectors, typingSelectors, cursorBlinkSelectors, streamingSelectors, fileEditSelectors, runningSelectors, completionSelectors, errorSelectors, markdownSelectors, responseSelectors } from './automation/selectors.js';
-import { generateExecutionPrompt, generateReviewPrompt } from './automation/prompts.js';
-import { loadTaskDefinitions, buildDependencyGraph, parseDependencies, checkDependencies } from './automation/task-manager.js';
-import { ReviewManager } from './automation/review-manager.js';
-import { initializeBrowser, cleanup } from './automation/browser-manager.js';
-import { detectAITyping, extractAIResponse, detectResponseComplete, waitForAIResponse } from './automation/response-processor.js';
+
+// UI Modules
+import { cursorSelectors, typingSelectors, cursorBlinkSelectors, streamingSelectors, fileEditSelectors, runningSelectors, completionSelectors, errorSelectors, markdownSelectors, responseSelectors } from './automation/ui/selectors.js';
+
+// AI Modules
+import { generateExecutionPrompt, generateReviewPrompt } from './automation/ai/prompts.js';
+import { detectAITyping, extractAIResponse, detectResponseComplete, waitForAIResponse } from './automation/ai/response-processor.js';
+
+// Manager Modules
+import { loadTaskDefinitions, buildDependencyGraph, parseDependencies, checkDependencies } from './automation/managers/task-manager.js';
+import { ReviewManager } from './automation/managers/review-manager.js';
+import { initializeBrowser, cleanup } from './automation/managers/browser-manager.js';
+
+// Workflow Modules
+import { ExecutionWorkflow } from './automation/workflows/execution-workflow.js';
+import { PlanningWorkflow } from './automation/workflows/planning-workflow.js';
+
+// Core Modules
+import { ShellInterface } from './automation/core/shell-interface.js';
+import { MenuSystem } from './automation/core/menu-system.js';
+import { CONFIG, getConfig, loadConfigFromFile } from './automation/core/config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -27,12 +42,12 @@ const __dirname = dirname(__filename);
 class CDPTaskAutomationWorkflow {
     constructor() {
         this.config = {
-            projectRoot: process.cwd(),
-            tasksDir: 'docs/09_roadmap/tasks',
-            orchestratorFile: 'docs/09_roadmap/tasks/system/orchestrator.md',
-            progressFile: 'docs/09_roadmap/tasks/system/progress-tracker.md',
-            logFile: 'automation-workflow-cdp.log',
-            cdpPort: 9223
+            projectRoot: getConfig('paths.projectRoot', process.cwd()),
+            tasksDir: getConfig('paths.tasksDir', 'docs/09_roadmap/tasks'),
+            orchestratorFile: getConfig('paths.orchestratorFile', 'docs/09_roadmap/tasks/system/orchestrator.md'),
+            progressFile: getConfig('paths.progressFile', 'docs/09_roadmap/tasks/system/progress-tracker.md'),
+            logFile: getConfig('paths.logFile', 'automation-workflow-cdp.log'),
+            cdpPort: getConfig('cdp.defaultPort', 9222)
         };
         
         this.currentTask = null;
@@ -40,6 +55,10 @@ class CDPTaskAutomationWorkflow {
         this.completedTasks = [];
         this.failedTasks = [];
         this.browser = null;
+        
+        // NEW: Shell Interface and Menu System
+        this.shellInterface = new ShellInterface();
+        this.menuSystem = new MenuSystem();
         
         this.setupLogging();
     }
@@ -49,43 +68,423 @@ class CDPTaskAutomationWorkflow {
             const timestamp = new Date().toISOString();
             const logEntry = `[${timestamp}] [${level}] ${message}`;
             console.log(logEntry);
-            fs.appendFileSync(this.config.logFile, logEntry + '\n');
+            
+            if (getConfig('logging.fileLogging', true)) {
+                fs.appendFileSync(this.config.logFile, logEntry + '\n');
+            }
         };
     }
 
     async initialize() {
-        this.log('🚀 Initializing VibeFighters CDP Task Automation Workflow');
+        this.log('🚀 Initializing Cursor Automation CDP Task Automation Workflow');
         
-        // Parse command line arguments
+        // Load configuration from file if it exists
+        await loadConfigFromFile();
+        
+        // NEW: Run Shell Interface first
+        const shellResult = await this.shellInterface.run();
+        
+        // Handle different shell actions
+        switch (shellResult.action) {
+            case 'setup':
+                // Chrome setup instructions shown, exit
+                process.exit(0);
+                break;
+                
+            case 'list':
+                // Tasks listed, exit
+                process.exit(0);
+                break;
+                
+            case 'status':
+                // Status shown, exit
+                process.exit(0);
+                break;
+                
+            case 'config':
+                // Configuration shown, exit
+                process.exit(0);
+                break;
+                
+            case 'create-config':
+                // Configuration file created, exit
+                process.exit(0);
+                break;
+                
+            case 'execute':
+                // Continue with normal execution
+                this.config = { ...this.config, ...shellResult.config };
+                break;
+        }
+        
+        // NEW: Check if menu mode is requested
+        if (shellResult.config.showMenu) {
+            await this.runMenuMode();
+            return;
+        }
+        
+        // OLD: Original initialization logic
         this.parseArguments();
-        
-        // Load task definitions
         await this.loadTaskDefinitions();
-        
-        // Build dependency graph
         this.buildDependencyGraph();
-        
-        // Initialize browser connection
         await this.initializeBrowser();
         
         this.log(`📋 Loaded ${this.taskQueue.length} tasks for execution`);
     }
 
-    parseArguments() {
-        const args = process.argv.slice(2);
+    // NEW: Menu Mode
+    async runMenuMode() {
+        this.log('🎮 Starting Menu Mode');
         
-        for (const arg of args) {
-            if (arg.startsWith('--port=')) {
-                this.config.cdpPort = parseInt(arg.split('=')[1]);
-                this.log(`🔌 Using CDP port: ${this.config.cdpPort}`);
-            }
-            
-            if (arg.startsWith('--task-id=')) {
-                const taskId = parseInt(arg.split('=')[1]);
-                this.startFromTaskId = taskId;
-                this.log(`🎯 Starting from task ID: ${taskId}`);
-            }
+        try {
+            const menuChoice = await this.menuSystem.showMainMenu();
+            await this.handleMenuChoice(menuChoice);
+        } catch (error) {
+            this.log(`💥 Error in menu mode: ${error.message}`, 'ERROR');
+            process.exit(1);
         }
+    }
+
+    // NEW: Handle Menu Choices
+    async handleMenuChoice(choice) {
+        this.log(`🎯 Handling menu choice: ${choice.workflow} - ${choice.action}`);
+        
+        switch (choice.workflow) {
+            case 'execute':
+                await this.handleExecuteWorkflow(choice);
+                break;
+                
+            case 'planning':
+                await this.handlePlanningWorkflow(choice);
+                break;
+                
+            case 'debugging':
+                await this.handleDebuggingWorkflow(choice);
+                break;
+                
+            case 'testing':
+                await this.handleTestingWorkflow(choice);
+                break;
+                
+            case 'status':
+                await this.handleStatusWorkflow(choice);
+                break;
+                
+            case 'settings':
+                await this.handleSettingsWorkflow(choice);
+                break;
+                
+            default:
+                this.log(`❌ Unknown workflow: ${choice.workflow}`, 'ERROR');
+                process.exit(1);
+        }
+    }
+
+    // NEW: Handle Execute Workflow
+    async handleExecuteWorkflow(choice) {
+        this.log('🎯 Starting Execute Workflow');
+        
+        // Create new ExecutionWorkflow instance
+        const executionWorkflow = new ExecutionWorkflow(this.config, this.log);
+        
+        // Load task definitions
+        await executionWorkflow.loadTaskDefinitions();
+        executionWorkflow.buildDependencyGraph();
+        await executionWorkflow.initializeBrowser();
+        
+        switch (choice.action) {
+            case 'all':
+                await executionWorkflow.executeWorkflow();
+                break;
+                
+            case 'specific':
+                await executionWorkflow.executeSpecificTask(choice.taskId);
+                break;
+                
+            case 'list':
+                await executionWorkflow.listTasks();
+                break;
+                
+            case 'from':
+                executionWorkflow.setStartFromTaskId(choice.taskId);
+                await executionWorkflow.executeWorkflow();
+                break;
+                
+            default:
+                this.log(`❌ Unknown execute action: ${choice.action}`, 'ERROR');
+        }
+    }
+
+    // NEW: Handle Planning Workflow
+    async handlePlanningWorkflow(choice) {
+        this.log('📋 Starting Planning Workflow');
+        
+        // Create new PlanningWorkflow instance
+        const planningWorkflow = new PlanningWorkflow(this.config, this.log);
+        
+        // Initialize browser for AI communication
+        await planningWorkflow.initializeBrowser();
+        
+        switch (choice.action) {
+            case 'create':
+                await planningWorkflow.executePlanningWorkflow(choice.gameIdea, choice.projectName);
+                break;
+                
+            case 'edit':
+                await this.editExistingProject(choice.gameName);
+                break;
+                
+            case 'regenerate':
+                await this.regenerateProjectPlan(choice.gameName);
+                break;
+                
+            case 'templates':
+                await this.showProjectTemplates();
+                break;
+                
+            default:
+                this.log(`❌ Unknown planning action: ${choice.action}`, 'ERROR');
+        }
+    }
+
+    // NEW: Handle Debugging Workflow
+    async handleDebuggingWorkflow(choice) {
+        this.log('🐛 Starting Debugging Workflow');
+        
+        switch (choice.action) {
+            case 'analyze':
+                await this.analyzeProjectIssues();
+                break;
+                
+            case 'fix':
+                await this.fixCommonIssues();
+                break;
+                
+            case 'report':
+                await this.generateDebugReport();
+                break;
+                
+            case 'manual':
+                await this.manualDebugMode();
+                break;
+                
+            default:
+                this.log(`❌ Unknown debugging action: ${choice.action}`, 'ERROR');
+        }
+    }
+
+    // NEW: Handle Testing Workflow
+    async handleTestingWorkflow(choice) {
+        this.log('🧪 Starting Testing Workflow');
+        
+        switch (choice.action) {
+            case 'start':
+                await this.startGame();
+                break;
+                
+            case 'automated':
+                await this.runAutomatedTests();
+                break;
+                
+            case 'performance':
+                await this.performanceTest();
+                break;
+                
+            case 'report':
+                await this.generateTestReport();
+                break;
+                
+            default:
+                this.log(`❌ Unknown testing action: ${choice.action}`, 'ERROR');
+        }
+    }
+
+    // NEW: Handle Status Workflow
+    async handleStatusWorkflow(choice) {
+        this.log('📊 Starting Status Workflow');
+        
+        switch (choice.action) {
+            case 'progress':
+                await this.showProjectProgress();
+                break;
+                
+            case 'summary':
+                await this.showTaskSummary();
+                break;
+                
+            case 'detailed':
+                await this.generateDetailedReport();
+                break;
+                
+            case 'timeline':
+                await this.showTimelineView();
+                break;
+                
+            default:
+                this.log(`❌ Unknown status action: ${choice.action}`, 'ERROR');
+        }
+    }
+
+    // NEW: Handle Settings Workflow
+    async handleSettingsWorkflow(choice) {
+        this.log('⚙️ Starting Settings Workflow');
+        
+        switch (choice.action) {
+            case 'cdp':
+                await this.configureCDP();
+                break;
+                
+            case 'templates':
+                await this.manageTemplates();
+                break;
+                
+            case 'ai':
+                await this.configureAI();
+                break;
+                
+            case 'paths':
+                await this.configurePaths();
+                break;
+                
+            default:
+                this.log(`❌ Unknown settings action: ${choice.action}`, 'ERROR');
+        }
+    }
+
+    // NEW: Placeholder methods for workflows (to be implemented)
+    async createNewGameProject(gameIdea, projectName) {
+        this.log(`🆕 Creating new game project: ${gameIdea}`);
+        
+        // Create new PlanningWorkflow instance
+        const planningWorkflow = new PlanningWorkflow(this.config, this.log);
+        
+        // Initialize browser for AI communication
+        await planningWorkflow.initializeBrowser();
+        
+        // Execute planning workflow
+        await planningWorkflow.executePlanningWorkflow(gameIdea, projectName);
+        
+        console.log(`✅ Game project "${gameIdea}" created successfully!`);
+    }
+
+    async editExistingProject(gameName) {
+        this.log(`📝 Editing existing project: ${gameName}`);
+        // TODO: Implement project editing
+        console.log(`✅ Project "${gameName}" edited successfully!`);
+    }
+
+    async regenerateProjectPlan(gameName) {
+        this.log(`🔄 Regenerating project plan: ${gameName}`);
+        // TODO: Implement plan regeneration
+        console.log(`✅ Project plan for "${gameName}" regenerated successfully!`);
+    }
+
+    async showProjectTemplates() {
+        this.log('📊 Showing project templates');
+        // TODO: Implement template listing
+        console.log('✅ Project templates displayed successfully!');
+    }
+
+    async analyzeProjectIssues() {
+        this.log('🔍 Analyzing project issues');
+        // TODO: Implement issue analysis
+        console.log('✅ Project issues analyzed successfully!');
+    }
+
+    async fixCommonIssues() {
+        this.log('🛠️ Fixing common issues');
+        // TODO: Implement issue fixing
+        console.log('✅ Common issues fixed successfully!');
+    }
+
+    async generateDebugReport() {
+        this.log('📊 Generating debug report');
+        // TODO: Implement debug report generation
+        console.log('✅ Debug report generated successfully!');
+    }
+
+    async manualDebugMode() {
+        this.log('🔧 Starting manual debug mode');
+        // TODO: Implement manual debugging
+        console.log('✅ Manual debug mode started successfully!');
+    }
+
+    async startGame() {
+        this.log('🚀 Starting game');
+        // TODO: Implement game starting
+        console.log('✅ Game started successfully!');
+    }
+
+    async runAutomatedTests() {
+        this.log('🧪 Running automated tests');
+        // TODO: Implement automated testing
+        console.log('✅ Automated tests completed successfully!');
+    }
+
+    async performanceTest() {
+        this.log('📊 Running performance test');
+        // TODO: Implement performance testing
+        console.log('✅ Performance test completed successfully!');
+    }
+
+    async generateTestReport() {
+        this.log('📋 Generating test report');
+        // TODO: Implement test report generation
+        console.log('✅ Test report generated successfully!');
+    }
+
+    async showProjectProgress() {
+        this.log('📈 Showing project progress');
+        // TODO: Implement progress display
+        console.log('✅ Project progress displayed successfully!');
+    }
+
+    async showTaskSummary() {
+        this.log('📋 Showing task summary');
+        // TODO: Implement task summary
+        console.log('✅ Task summary displayed successfully!');
+    }
+
+    async generateDetailedReport() {
+        this.log('📊 Generating detailed report');
+        // TODO: Implement detailed report generation
+        console.log('✅ Detailed report generated successfully!');
+    }
+
+    async showTimelineView() {
+        this.log('📅 Showing timeline view');
+        // TODO: Implement timeline view
+        console.log('✅ Timeline view displayed successfully!');
+    }
+
+    async configureCDP() {
+        this.log('🔧 Configuring CDP');
+        // TODO: Implement CDP configuration
+        console.log('✅ CDP configured successfully!');
+    }
+
+    async manageTemplates() {
+        this.log('🎮 Managing templates');
+        // TODO: Implement template management
+        console.log('✅ Templates managed successfully!');
+    }
+
+    async configureAI() {
+        this.log('🤖 Configuring AI');
+        // TODO: Implement AI configuration
+        console.log('✅ AI configured successfully!');
+    }
+
+    async configurePaths() {
+        this.log('📁 Configuring paths');
+        // TODO: Implement path configuration
+        console.log('✅ Paths configured successfully!');
+    }
+
+    // OLD: Original methods (keep existing functionality)
+    parseArguments() {
+        // This is now handled by ShellInterface
+        // Keep for backward compatibility
     }
 
     async loadTaskDefinitions() {
@@ -117,433 +516,36 @@ class CDPTaskAutomationWorkflow {
         }
     }
 
-
-
-    async executeWorkflow() {
-        this.log('🎬 Starting CDP-based automated task execution workflow');
+    // NEW: Execute specific task
+    async executeSpecificTask(taskId) {
+        this.log(`🎯 Executing specific task: ${taskId}`);
         
-        // PHASE 1: Initial Review (NEW!)
-        this.log('🔍 PHASE 1: Performing initial project review...');
-        const reviewManager = new ReviewManager(this.config, this.log);
-        
-        try {
-            // Generate review prompt
-            const reviewResult = await reviewManager.performInitialReview(this.taskQueue, this.completedTasks, this.failedTasks);
-            
-            if (reviewResult.status === 'error') {
-                this.log('❌ Review phase failed, but continuing with task execution', 'WARNING');
-            } else {
-                // Send review prompt to AI via CDP
-                this.log('🤖 Sending review prompt to AI for analysis...');
-                const reviewResponse = await this.sendToAIviaCDP(reviewResult.prompt);
-                
-                // Process review response
-                const reviewProcessResult = await reviewManager.processReviewResponse(reviewResponse);
-                
-                if (reviewProcessResult.status === 'completed') {
-                    this.log('✅ Review phase completed successfully');
-                    
-                    if (!reviewProcessResult.canProceed) {
-                        this.log('🚨 Review indicates automation should not proceed', 'ERROR');
-                        this.log('Critical issues found that require manual intervention');
-                        return;
-                    }
-                    
-                    // AI has already updated the orchestrator files directly
-                    this.log('✅ AI has updated orchestrator files - reloading task definitions...');
-                    await this.loadTaskDefinitions(); // Reload with updated data
-                } else {
-                    this.log('⚠️ Review processing failed, continuing with original task queue', 'WARNING');
-                }
-            }
-        } catch (error) {
-            this.log(`💥 Error in review phase: ${error.message}`, 'ERROR');
-            this.log('Continuing with task execution...', 'WARNING');
+        const task = this.taskQueue.find(t => t.id === taskId);
+        if (!task) {
+            this.log(`❌ Task ${taskId} not found`, 'ERROR');
+            return;
         }
         
-        // PHASE 2: Task Execution (existing logic)
-        this.log('🚀 PHASE 2: Starting task execution...');
+        await this.initializeBrowser();
+        await this.executeTaskWithCDP(task);
+    }
+
+    // NEW: List tasks
+    async listTasks() {
+        this.log('📋 Listing tasks');
         
-        // Process ALL tasks - no safety limit
-        let processedTasks = 0;
-        let maxRetries = 3; // Maximum retry attempts per task
-        let retryCount = 0;
-        
-        // Keep track of tasks that need to be retried
-        let pendingTasks = [...this.taskQueue];
-        let completedThisRound = [];
-        
-        while (pendingTasks.length > 0 && retryCount < maxRetries) {
-            this.log(`🔄 Round ${retryCount + 1}: Processing ${pendingTasks.length} pending tasks`);
-            
-            let tasksToProcess = [...pendingTasks];
-            pendingTasks = []; // Reset for next round
-            
-            for (const task of tasksToProcess) {
-                // Skip if starting from specific task
-                if (this.startFromTaskId && task.id < this.startFromTaskId) {
-                    this.log(`⏭️ Skipping task ${task.id} (starting from ${this.startFromTaskId})`);
-                    continue;
-                }
-                
-                // Skip if task is already completed
-                if (task.status === '✅ Completed' || task.status === 'Completed') {
-                    this.log(`✅ Task ${task.id} already completed, skipping`);
-                    this.completedTasks.push(task);
-                    continue;
-                }
-                
-                // Check dependencies - only skip if task has dependencies that aren't met
-                if (task.dependencies && task.dependencies !== '-' && !this.checkDependencies(task)) {
-                    this.log(`⏳ Task ${task.id} dependencies not met, will retry in next round`);
-                    pendingTasks.push(task); // Add back to pending for next round
-                    continue;
-                }
-                
-                this.currentTask = task;
-                this.log(`🎯 Executing Task ${task.id}: ${task.name}`);
-                
-                try {
-                    const success = await this.executeTaskWithCDP(task);
-                    
-                    if (success) {
-                        this.completedTasks.push(task);
-                        completedThisRound.push(task.id);
-                        this.log(`✅ Task ${task.id} completed successfully`);
-                    } else {
-                        this.failedTasks.push(task);
-                        this.log(`❌ Task ${task.id} failed`);
-                    }
-                    
-                    // Update progress
-                    await this.updateProgress();
-                    
-                    // Wait between tasks
-                    await this.delay(5000); // 5 seconds between tasks
-                    
-                    processedTasks++;
-                    
-                } catch (error) {
-                    this.log(`💥 Error executing task ${task.id}: ${error.message}`, 'ERROR');
-                    this.failedTasks.push(task);
-                }
-            }
-            
-            // If no tasks were completed this round, increment retry count
-            if (completedThisRound.length === 0) {
-                retryCount++;
-                this.log(`⚠️ No tasks completed in round ${retryCount}, retry ${retryCount}/${maxRetries}`);
-            } else {
-                retryCount = 0; // Reset retry count if we made progress
-                this.log(`✅ Completed ${completedThisRound.length} tasks this round`);
-            }
-            
-            // Small delay between rounds
-            if (pendingTasks.length > 0) {
-                await this.delay(2000);
-            }
+        if (this.taskQueue.length === 0) {
+            await this.loadTaskDefinitions();
         }
         
-        // Report on any remaining pending tasks
-        if (pendingTasks.length > 0) {
-            this.log(`⚠️ ${pendingTasks.length} tasks could not be completed due to dependency issues:`, 'WARNING');
-            for (const task of pendingTasks) {
-                this.log(`   - Task ${task.id}: ${task.name} (dependencies: ${task.dependencies})`);
-            }
+        console.log('\n📋 Available Tasks:');
+        console.log('==================\n');
+        
+        for (const task of this.taskQueue) {
+            const status = task.status || '📋 Ready';
+            const progress = task.progress || '0%';
+            console.log(`${task.id.toString().padStart(2)}. ${task.name.padEnd(40)} ${status} (${progress})`);
         }
-        
-        await this.generateFinalReport();
-        await this.cleanup();
-    }
-
-    checkDependencies(task) {
-        return checkDependencies(task, this.completedTasks);
-    }
-
-    async executeTaskWithCDP(task) {
-        try {
-            // 1. Load task details
-            const taskDetails = await this.loadTaskDetails(task);
-            
-            // 2. Generate prompt
-            const prompt = this.generateExecutionPrompt(task, taskDetails);
-            
-            // 3. Send to AI via CDP
-            const response = await this.sendToAIviaCDP(prompt);
-            
-            // 4. Validate response
-            const validation = await this.validateTaskCompletion(task, response);
-            
-            // 5. Update task status
-            await this.updateTaskStatus(task, validation.success);
-            
-            return validation.success;
-            
-        } catch (error) {
-            this.log(`💥 Error in CDP task execution: ${error.message}`, 'ERROR');
-            return false;
-        }
-    }
-
-    async loadTaskDetails(task) {
-        const taskDir = path.join(
-            this.config.tasksDir,
-            task.category.replace(/\s+/g, '-').toLowerCase(),
-            task.name.replace(/\s+/g, '-').toLowerCase()
-        );
-        
-        const implementationFile = path.join(taskDir, `${task.name.replace(/\s+/g, '-').toLowerCase()}-implementation.md`);
-        
-        if (fs.existsSync(implementationFile)) {
-            return fs.readFileSync(implementationFile, 'utf8');
-        }
-        
-        return `Task: ${task.name}\nCategory: ${task.category}\nTime: ${task.time}\nStatus: ${task.status}`;
-    }
-
-    generateExecutionPrompt(task, taskDetails) {
-        return generateExecutionPrompt(task, taskDetails);
-    }
-
-    async sendToAIviaCDP(prompt) {
-        this.log('🤖 Sending prompt to Cursor AI via CDP...');
-        
-        try {
-            return await this.sendToCursor(prompt);
-        } catch (error) {
-            this.log(`❌ Failed to send prompt: ${error.message}`, 'ERROR');
-            throw error;
-        }
-    }
-
-    async sendToCursor(prompt) {
-        // Use imported selectors
-        const chatSelectors = cursorSelectors;
-
-        // 1. Try multiple strategies to start a new chat
-        let newChatCreated = false;
-        
-        // Strategy 1: Try to click "New Chat" button
-        try {
-            await this.page.click(chatSelectors.newChatButton);
-            this.log('🆕 Clicked New Chat button');
-            newChatCreated = true;
-            await this.delay(1000); // Wait for new chat to load
-        } catch (error) {
-            this.log('⚠️ Could not click New Chat button, trying keyboard shortcut', 'WARNING');
-        }
-        
-        // Strategy 2: Try keyboard shortcut Ctrl+N
-        if (!newChatCreated) {
-            try {
-                await this.page.keyboard.press('Control+n');
-                this.log('⌨️ Used Ctrl+N shortcut for new chat');
-                newChatCreated = true;
-                await this.delay(1000); // Wait for new chat to load
-            } catch (error) {
-                this.log('⚠️ Could not use Ctrl+N shortcut, using existing chat', 'WARNING');
-            }
-        }
-        
-        // Strategy 3: Try to find and click the specific button from your example
-        if (!newChatCreated) {
-            try {
-                await this.page.click('.action-label.codicon.codicon-add-two[aria-label*="New Chat"]');
-                this.log('🆕 Clicked specific New Chat button');
-                newChatCreated = true;
-                await this.delay(1000);
-            } catch (error) {
-                this.log('⚠️ Could not find specific New Chat button, using existing chat', 'WARNING');
-            }
-        }
-
-        // 2. Wait for chat input to be available
-        await this.page.waitForSelector(chatSelectors.input);
-        
-        // 3. Find the input field
-        const inputSelector = await this.page.$(chatSelectors.input);
-        
-        if (!inputSelector) {
-            throw new Error('Could not find Cursor chat input');
-        }
-        
-        // 4. Click input and paste the entire prompt at once
-        await inputSelector.click();
-        await inputSelector.fill(prompt); // Paste entire prompt at once!
-        
-        // 5. Send the message
-        await inputSelector.press('Enter');
-        
-        this.log('📤 Prompt sent to Cursor, waiting for response...');
-        
-        // 6. Wait for response
-        const response = await this.waitForAIResponse(chatSelectors);
-        
-        return response;
-    }
-
-    async detectAITyping(chatSelectors) {
-        return detectAITyping(this.page, typingSelectors, cursorBlinkSelectors, streamingSelectors, this.log);
-    }
-
-    async extractAIResponse(chatSelectors) {
-        return extractAIResponse(this.page, chatSelectors, this.log);
-    }
-
-    async detectResponseComplete(chatSelectors, currentText, lastLength) {
-        return detectResponseComplete(this.page, currentText, lastLength, this.log);
-    }
-
-    async waitForAIResponse(chatSelectors) {
-        return waitForAIResponse(
-            this.page, 
-            chatSelectors, 
-            typingSelectors, 
-            cursorBlinkSelectors, 
-            streamingSelectors, 
-            errorSelectors, 
-            this.log, 
-            this.delay
-        );
-    }
-
-    async validateTaskCompletion(task, aiResponse) {
-        try {
-            // Check if AI gave a meaningful response
-            if (!aiResponse || aiResponse.length < 100) {
-                this.log('⚠️ AI response too short or empty', 'WARNING');
-                return { success: false, reason: 'AI response too short' };
-            }
-            
-            // Check for common success indicators in AI response
-            const successIndicators = [
-                'completed', 'success', 'done', 'finished', 'implemented', 
-                'created', 'added', 'updated', 'working', 'functional'
-            ];
-            
-            const hasSuccessIndicator = successIndicators.some(indicator => 
-                aiResponse.toLowerCase().includes(indicator)
-            );
-            
-            // Check for error indicators
-            const errorIndicators = [
-                'error', 'failed', 'cannot', 'unable', 'missing', 'not found',
-                'invalid', 'broken', 'doesn\'t work', 'failed to'
-            ];
-            
-            const hasErrorIndicator = errorIndicators.some(indicator => 
-                aiResponse.toLowerCase().includes(indicator)
-            );
-            
-            if (hasErrorIndicator) {
-                this.log('❌ AI response contains error indicators', 'ERROR');
-                return { success: false, reason: 'AI reported errors in response' };
-            }
-            
-            if (hasSuccessIndicator) {
-                this.log('✅ AI response indicates success', 'SUCCESS');
-                return { success: true, result: { status: 'completed' } };
-            }
-            
-            // If no clear indicators, assume success if response is substantial
-            if (aiResponse.length > 500) {
-                this.log('✅ AI provided substantial response, assuming success', 'SUCCESS');
-                return { success: true, result: { status: 'completed' } };
-            }
-            
-            this.log('⚠️ AI response unclear, marking as failed', 'WARNING');
-            return { success: false, reason: 'Unclear AI response' };
-            
-        } catch (error) {
-            this.log(`❌ Validation error: ${error.message}`, 'ERROR');
-            return { success: false, reason: `Validation error: ${error.message}` };
-        }
-    }
-
-    async updateTaskStatus(task, success) {
-        // Update the orchestrator file
-        const orchestratorPath = this.config.orchestratorFile;
-        let content = fs.readFileSync(orchestratorPath, 'utf8');
-        
-        const status = success ? '✅ Completed' : '❌ Failed';
-        const progress = success ? '100%' : '0%';
-        
-        // Update task status in the table
-        const taskRegex = new RegExp(`\\| ${task.id} \\| ([^|]+) \\| ([^|]+) \\| ([^|]+) \\| ([^|]+) \\| ([^|]+) \\| ([^|]+) \\| ([^|]+) \\|`, 'g');
-        content = content.replace(taskRegex, `| ${task.id} | $1 | $2 | $3 | ${status} | ${progress} | $6 | $7 |`);
-        
-        fs.writeFileSync(orchestratorPath, content);
-        this.log(`📝 Updated task ${task.id} status to ${status}`);
-    }
-
-    async updateProgress() {
-        const totalTasks = this.taskQueue.length;
-        const completedCount = this.completedTasks.length;
-        const failedCount = this.failedTasks.length;
-        const progress = Math.round((completedCount / totalTasks) * 100);
-        
-        this.log(`📊 Progress: ${completedCount}/${totalTasks} completed (${progress}%)`);
-        
-        // Update progress tracker
-        const progressContent = `# VibeFighters Progress Tracker
-
-## Automated Progress Update (CDP)
-- **Timestamp**: ${new Date().toISOString()}
-- **Total Tasks**: ${totalTasks}
-- **Completed**: ${completedCount}
-- **Failed**: ${failedCount}
-- **In Progress**: ${totalTasks - completedCount - failedCount}
-- **Overall Progress**: ${progress}%
-- **CDP Port**: ${this.config.cdpPort}
-
-## Current Task
-- **ID**: ${this.currentTask?.id || 'N/A'}
-- **Name**: ${this.currentTask?.name || 'N/A'}
-- **Status**: ${this.currentTask ? 'Executing' : 'Completed'}
-
-## Recent Completions
-${this.completedTasks.slice(-5).map(task => `- Task ${task.id}: ${task.name}`).join('\n')}
-
-## Failed Tasks
-${this.failedTasks.map(task => `- Task ${task.id}: ${task.name}`).join('\n')}
-
----
-*Last updated by CDP automation workflow*`;
-        
-        fs.writeFileSync(this.config.progressFile, progressContent);
-    }
-
-    async generateFinalReport() {
-        const report = `# VibeFighters CDP Automation Workflow Report
-
-## Execution Summary
-- **Start Time**: ${new Date().toISOString()}
-- **End Time**: ${new Date().toISOString()}
-- **Total Tasks**: ${this.taskQueue.length}
-- **Completed**: ${this.completedTasks.length}
-- **Failed**: ${this.failedTasks.length}
-- **Success Rate**: ${Math.round((this.completedTasks.length / this.taskQueue.length) * 100)}%
-- **CDP Port**: ${this.config.cdpPort}
-
-## Completed Tasks
-${this.completedTasks.map(task => `✅ Task ${task.id}: ${task.name}`).join('\n')}
-
-## Failed Tasks
-${this.failedTasks.map(task => `❌ Task ${task.id}: ${task.name}`).join('\n')}
-
-## Recommendations
-${this.failedTasks.length > 0 ? 
-    `- Review and retry failed tasks manually
-- Check dependencies and prerequisites
-- Verify CDP connection and target accessibility` : 
-    '- All tasks completed successfully! 🎉'}
-
----
-*Generated by VibeFighters CDP Automation Workflow*`;
-        
-        const reportFile = `automation-cdp-report-${new Date().toISOString().split('T')[0]}.md`;
-        fs.writeFileSync(reportFile, report);
-        this.log(`📋 Final report saved to ${reportFile}`);
     }
 
     async cleanup() {

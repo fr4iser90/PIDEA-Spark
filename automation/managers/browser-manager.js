@@ -27,8 +27,8 @@ export async function initializeBrowser(cdpPort, log) {
         
     } catch (error) {
         log(`❌ Failed to connect to browser: ${error.message}`, 'ERROR');
-        log('💡 Make sure Chrome is running with --remote-debugging-port=9223', 'INFO');
-        log('🔧 Try running: google-chrome --remote-debugging-port=9223 --user-data-dir=/tmp/chrome-debug', 'INFO');
+        log('💡 Make sure Chrome is running with --remote-debugging-port=9222', 'INFO');
+        log('🔧 Try running: google-chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-debug', 'INFO');
         throw error;
     }
 }

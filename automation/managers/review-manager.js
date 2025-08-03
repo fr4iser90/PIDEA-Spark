@@ -1,4 +1,4 @@
-// Review Manager for VibeFighters Project
+// Review Manager for Cursor Automation CDP Project
 import { generateReviewPrompt } from './prompts.js';
 import fs from 'fs';
 import path from 'path';

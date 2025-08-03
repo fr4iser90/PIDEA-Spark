@@ -1,4 +1,4 @@
-# VibeFighters Progress Tracker
+# Cursor Automation CDP Progress Tracker
 
 ## Automated Progress Update (CDP)
 - **Timestamp**: 2025-08-03T12:33:24.573Z
@@ -7,7 +7,7 @@
 - **Failed**: 2
 - **In Progress**: 25
 - **Overall Progress**: 0%
-- **CDP Port**: 9223
+- **CDP Port**: 9222
 
 ## Current Task
 - **ID**: 6

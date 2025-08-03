@@ -239,7 +239,7 @@ graph TB
 
 ```mermaid
 gantt
-    title VibeFighters Development Phases
+    title Cursor Automation CDP Development Phases
     dateFormat  YYYY-MM-DD
     section Phase 1: Core Engine
     Game Engine Core           :done, ge_core, 2024-01-01, 2024-02-15

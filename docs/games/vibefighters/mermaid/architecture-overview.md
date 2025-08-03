@@ -1,11 +1,11 @@
-# VibeFighters System Architecture
+# Cursor Automation CDP System Architecture
 
 ## 🏗️ **Gesamtsystem-Architektur**
 
 ```mermaid
 graph TB
     %% Main Application Layer
-    subgraph "🎮 VibeFighters Application"
+    subgraph "🎮 Cursor Automation CDP Application"
         subgraph "🖥️ Frontend Layer"
             UI[UI System & Controls]
             MOBILE[Mobile Optimization]
@@ -193,7 +193,7 @@ flowchart LR
 
 ```mermaid
 graph TD
-    subgraph "🎮 VibeFighters"
+    subgraph "🎮 Cursor Automation CDP"
         subgraph "🎯 Core Systems"
             ENGINE[Game Engine]
             RENDERER[Renderer]

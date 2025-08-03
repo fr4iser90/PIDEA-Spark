@@ -1,14 +1,13 @@
 {
-  "name": "simple-cursor-automation",
+  "name": "cursor-automation-cdp",
   "version": "1.0.0",
-  "description": "Simple Cursor Workflow CDP Automation System",
-  "type": "module",
+  "description": "Cursor IDE Task Automation System using Chrome DevTools Protocol (CDP)",
   "main": "automation-workflow-cdp.js",
+  "type": "module",
   "scripts": {
     "start": "node automation-workflow-cdp.js",
     "dev": "node automation-workflow-cdp.js --verbose",
     "test": "node automation-workflow-cdp.js --dry-run",
-    "setup": "./run-automation-cdp.sh --setup-chrome",
     "list": "./run-automation-cdp.sh --list-tasks",
     "status": "./run-automation-cdp.sh --status"
   },
@@ -17,9 +16,10 @@
     "automation",
     "cdp",
     "playwright",
-    "workflow"
+    "ide",
+    "task-automation"
   ],
-  "author": "Simple Cursor Automation",
+  "author": "Patrick B.",
   "license": "MIT",
   "dependencies": {
     "playwright": "^1.54.2"

@@ -1,6 +1,6 @@
-# 🚀 Cursor IDE Automation Scripts
+# 🚀 Cursor IDE CDP Starter Scripts
 
-Diese Skripte starten Cursor IDE mit CDP (Chrome DevTools Protocol) auf Port 9223 für die VibeFighters-Automatisierung.
+Diese Skripte starten Cursor IDE mit CDP (Chrome DevTools Protocol) auf Port 9222 für die Cursor Automation CDP-Automatisierung.
 
 ## 📁 Dateien
 
@@ -47,7 +47,7 @@ CURSOR_PATH="./Cursor-1.2.2-x86_64.AppImage"
 # CURSOR_PATH="C:\Program Files\Cursor\Cursor.exe"
 
 # Cursor IDE Port (fixed)
-CURSOR_PORT=9223
+CURSOR_PORT=9222
 
 # AppImage-Runner (Linux)
 APPIMAGE_RUNNER="appimage-run"
@@ -94,8 +94,8 @@ start_ide_example.bat help
 
 ### Port-Konfiguration
 
-- **Cursor**: Port 9223 (fest eingestellt)
-- **CDP URL**: `http://localhost:9223/json/version`
+- **Cursor**: Port 9222 (fest eingestellt)
+- **CDP URL**: `http://localhost:9222/json/version`
 
 ## 🔍 Troubleshooting
 
@@ -113,7 +113,7 @@ nano ide-config.local.env
 
 ```bash
 # Prüfe belegte Ports
-netstat -tuln | grep :9223
+netstat -tuln | grep :9222
 
 # Stoppe Cursor
 ./start_ide_example.sh stop
@@ -143,7 +143,7 @@ Get-ExecutionPolicy
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-## 🔗 Integration mit VibeFighters-Automatisierung
+## 🔗 Integration mit Cursor Automation CDP-Automatisierung
 
 ### 1. Cursor starten
 ```bash
@@ -152,12 +152,12 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ### 2. CDP-Verbindung testen
 ```bash
-curl http://localhost:9223/json/version
+curl http://localhost:9222/json/version
 ```
 
 ### 3. Automatisierung starten
 ```bash
-./run-automation-cdp.sh -p 9223
+./run-automation-cdp.sh -p 9222
 ```
 
 ## 📊 Status-Überwachung
@@ -171,14 +171,14 @@ curl http://localhost:9223/json/version
 ```
 📊 Cursor IDE Status:
 
-✅ Port 9223 ist belegt
+✅ Port 9222 ist belegt
 🔍 Teste CDP-Verbindung...
 ✅ CDP-Verbindung funktioniert
-   URL: http://localhost:9223/json/version
+   URL: http://localhost:9222/json/version
 📋 Laufende Prozesse:
    PID 12345 Cursor
 
-📁 Cursor Verzeichnis: /home/user/.cursor_9223
+📁 Cursor Verzeichnis: /home/user/.cursor_9222
 ✅ Verzeichnis existiert
 ```
 
@@ -198,7 +198,7 @@ nano ide-config.local.env
 ./start_ide_example.sh status
 
 # 4. Automatisierung starten
-./run-automation-cdp.sh -p 9223
+./run-automation-cdp.sh -p 9222
 
 # 5. Fortschritt überwachen
 ./run-automation-cdp.sh --status
@@ -209,7 +209,7 @@ nano ide-config.local.env
 ```bash
 # Hauptentwicklung
 ./start_ide_example.sh start
-./run-automation-cdp.sh -p 9223
+./run-automation-cdp.sh -p 9222
 
 # Stoppen für Pause
 ./start_ide_example.sh stop
@@ -229,10 +229,10 @@ Falls du mehrere Cursor-Instanzen brauchst, kannst du die Skripte kopieren und d
 cp start_ide_example.sh start_ide_example_9224.sh
 
 # Ändere Port in der Kopie
-sed -i 's/CURSOR_PORT=9223/CURSOR_PORT=9224/' start_ide_example_9224.sh
+sed -i 's/CURSOR_PORT=9222/CURSOR_PORT=9224/' start_ide_example_9224.sh
 
 # Verwende beide
-./start_ide_example.sh start      # Port 9223
+./start_ide_example.sh start      # Port 9222
 ./start_ide_example_9224.sh start # Port 9224
 ```
 

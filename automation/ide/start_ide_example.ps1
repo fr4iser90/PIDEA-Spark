@@ -7,7 +7,7 @@ param(
 $CURSOR_PATH = if ($env:CURSOR_PATH) { $env:CURSOR_PATH } else { ".\Cursor.exe" }
 
 # Cursor IDE Konfiguration
-$CURSOR_PORT = 9223
+$CURSOR_PORT = 9222
 
 # Hilfsfunktion: prüft ob Port frei ist
 function Test-PortInUse {

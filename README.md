@@ -1,8 +1,8 @@
-# 🤖 VibeFighters Cursor IDE Task Automation System
+# 🤖 Cursor Automation CDP Task Automation System
 
 ## 🎯 Overview
 
-This system automates VibeFighters development tasks by **directly controlling Cursor IDE** through **Chrome DevTools Protocol (CDP)** using Playwright. No APIs needed!
+This system automates Cursor Automation CDP development tasks by **directly controlling Cursor IDE** through **Chrome DevTools Protocol (CDP)** using Playwright. No APIs needed!
 
 ### 🚀 Key Features
 - **Direct Cursor IDE Control**: Uses CDP to control Cursor IDE like a human
@@ -185,7 +185,7 @@ graph TD
 The system sends structured prompts like:
 
 ```
-# VibeFighters Task Execution
+# Cursor Automation CDP Task Execution
 
 ## Task Information
 - ID: 1
@@ -265,7 +265,7 @@ export CURSOR_PATH="./Cursor-1.2.2-x86_64.AppImage"
 ## 📁 File Structure
 
 ```
-VibeFighters/
+Cursor Automation CDP/
 ├── automation-workflow-cdp.js      # Main CDP automation script
 ├── run-automation-cdp.sh           # CDP shell wrapper
 ├── automation-cdp-config.json      # CDP configuration
@@ -387,7 +387,7 @@ nano automation/ide/start_ide_example.sh
 ./automation/ide/start_ide_example.sh cursor 2
 
 # Run automation on specific port
-./run-automation-cdp.sh -p 9223
+./run-automation-cdp.sh -p 9222
 ```
 
 ## 📈 Expected Results

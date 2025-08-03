@@ -11,7 +11,7 @@ if defined CURSOR_PATH (
 )
 
 REM Cursor IDE Konfiguration
-set "CURSOR_PORT=9223"
+set "CURSOR_PORT=9222"
 
 REM Hilfsfunktion: prüft ob Port frei ist
 :port_in_use

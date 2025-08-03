@@ -1,4 +1,4 @@
-# VibeFighters Mermaid Diagramme
+# Cursor Automation CDP Mermaid Diagramme
 
 ## 📊 **Diagramm-Übersicht**
 

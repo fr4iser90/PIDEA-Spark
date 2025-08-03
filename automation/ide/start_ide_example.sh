@@ -12,7 +12,7 @@ CURSOR_PATH="${CURSOR_PATH:-./Cursor-1.2.2-x86_64.AppImage}"
 APPIMAGE_RUNNER="${APPIMAGE_RUNNER:-appimage-run}"
 
 # Cursor IDE Konfiguration
-CURSOR_PORT=9223
+CURSOR_PORT=9222
 
 # Hilfsfunktion: prüft ob Port frei ist
 port_in_use() {
@@ -54,7 +54,7 @@ show_help() {
   echo "  $0 [start|stop|status|help]"
   echo ""
   echo "Befehle:"
-  echo "  start   - Cursor IDE auf Port 9223 starten"
+  echo "  start   - Cursor IDE auf Port 9222 starten"
   echo "  stop    - Cursor IDE stoppen"
   echo "  status  - Status prüfen"
   echo "  help    - Diese Hilfe anzeigen"

@@ -1,6 +1,6 @@
 // Prompt generation function (extracted from automation-workflow-cdp.js)
 export function generateExecutionPrompt(task, taskDetails) {
-    return `# VibeFighters Task Execution
+    return `# Cursor Automation CDP Task Execution
 
 ## Task Information
 - **ID**: ${task.id}
@@ -56,7 +56,7 @@ export function generateReviewPrompt(taskQueue, completedTasks, failedTasks) {
         !completedTaskIds.includes(t.id) && !failedTaskIds.includes(t.id)
     ).map(t => t.id);
 
-    return `# VibeFighters Project Review & Orchestrator Update
+    return `# Cursor Automation CDP Project Review & Orchestrator Update
 
 ## Current Project State Analysis
 
@@ -78,7 +78,7 @@ ${taskQueue.map(task => `
 
 ## Review Instructions
 
-Please perform a comprehensive review of the VibeFighters project and update the orchestrator:
+Please perform a comprehensive review of the Cursor Automation CDP project and update the orchestrator:
 
 1. **Analyze Current Codebase State**
    - Review existing implementations
@@ -152,4 +152,51 @@ Please respond with:
 - Update task statuses, progress indicators, and dependencies in the actual files
 - Provide specific, actionable recommendations
 - The orchestrator should reflect the true state of the project after your updates`;
+} 
+
+export function generatePlanningPrompt(gameIdea, requirements) {
+    return `# Game Development Planning Request
+
+## Game Idea
+${gameIdea}
+
+## Planning Requirements
+${requirements}
+
+## Request
+Please analyze this game idea and create a comprehensive development plan including:
+1. Technical architecture recommendations
+2. Feature prioritization
+3. Development timeline estimation
+4. Resource requirements
+5. Risk assessment
+
+Provide a structured plan that can be used for automated task generation.`;
+}
+
+export function generateTaskCreationPrompt(task, category, gameConfig) {
+    return `# Task Creation Request
+
+## Task Information
+- **Task Name**: ${task.name}
+- **Category**: ${category.name}
+- **Game Type**: ${gameConfig.gameType}
+- **Genre**: ${gameConfig.primaryGenre}
+
+## Game Configuration
+- **Core Mechanics**: ${gameConfig.coreMechanics}
+- **Multiplayer**: ${gameConfig.features.multiplayer ? 'Yes' : 'No'}
+- **3D Graphics**: ${gameConfig.features.graphics3d ? 'Yes' : 'No'}
+- **Audio**: ${gameConfig.features.audio ? 'Yes' : 'No'}
+- **AI**: ${gameConfig.features.ai ? 'Yes' : 'No'}
+- **Physics**: ${gameConfig.features.physics ? 'Yes' : 'No'}
+
+## Request
+Please create detailed implementation files for this task:
+1. Task index with overview and requirements
+2. Implementation plan with technical details
+3. Three-phase breakdown (Foundation, Core, Integration)
+4. Success criteria and validation methods
+
+Provide comprehensive, actionable content for automated development.`;
 } 

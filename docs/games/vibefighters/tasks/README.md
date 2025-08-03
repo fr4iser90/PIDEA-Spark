@@ -1,4 +1,4 @@
-# VibeFighters Task Management System
+# Cursor Automation CDP Task Management System
 
 ## 📁 **New Organizational Structure**
 

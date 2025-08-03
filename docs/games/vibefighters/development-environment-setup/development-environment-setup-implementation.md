@@ -273,7 +273,7 @@ export default defineConfig({
 
 ### Final Directory Structure:
 ```
-vibefighters/
+cursor-automation-cdp/
 ├── src/
 │   ├── main.js                 # Main entry point
 │   ├── game/
