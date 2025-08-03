@@ -21,7 +21,7 @@ import { initializeBrowser } from '../managers/browser-manager.js';
 import { TemplateManager } from '../file-operations/template-manager.js';
 
 // AI Modules
-import { generatePlanningPrompt, generateTaskCreationPrompt, generateGameIdeaAnalysisPrompt, generateComprehensiveTaskCreationPrompt } from '../ai/prompts.js';
+import { generatePlanningPrompt, generateTaskCreationPrompt, generateGameIdeaAnalysisPrompt, generateComprehensiveTaskCreationPrompt, generateOrchestratorValidationPrompt } from '../ai/prompts.js';
 import { detectAITyping, extractAIResponse, detectResponseComplete, waitForAIResponse } from '../ai/response-processor.js';
 import { SendToCursor } from '../ai/send-to-cursor.js';
 
@@ -71,17 +71,21 @@ export class PlanningWorkflow {
         // PHASE 4: Orchestrator Generation
         this.log('📋 PHASE 4: Generating orchestrator...');
         await this.generateOrchestrator();
+
+        // PHASE 5: Orchestrator Validation
+        this.log('📋 PHASE 5: Validating orchestrator...');
+        await this.validateOrchestrator();
         
-        // PHASE 5: AI Task Creation via CDP
-        this.log('🤖 PHASE 5: Creating detailed task files via AI...');
+        // PHASE 6: AI Task Creation via CDP
+        this.log('🤖 PHASE 6: Creating detailed task files via AI...');
         await this.createDetailedTaskFilesViaAI();
         
-        // PHASE 6: Task File Creation
-        this.log('📝 PHASE 6: Creating individual task files...');
+        // PHASE 7: Task File Creation
+        this.log('📝 PHASE 7: Creating individual task files...');
         await this.createTaskFiles();
         
-        // PHASE 7: Final Validation
-        this.log('✅ PHASE 7: Final validation...');
+        // PHASE 8: Final Validation
+        this.log('✅ PHASE 8: Final validation...');
         await this.validateProjectStructure();
         
         this.log('🎉 Planning workflow completed successfully!');
@@ -951,6 +955,93 @@ ${this.customizedTasks.map(category =>
 
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async validateOrchestrator() {
+        this.log('🔍 Validating orchestrator file via AI...');
+        
+        try {
+            // Get orchestrator path
+            const orchestratorPath = path.join(this.projectPath, 'system', 'orchestrator.md');
+            
+            // Generate orchestrator validation prompt
+            const prompt = generateOrchestratorValidationPrompt(orchestratorPath, this.gameConfig);
+            
+            this.log('📤 Sending orchestrator validation request to AI...');
+            const response = await this.sendToAIviaCDP(prompt);
+            
+            // Parse the response to extract validation results
+            const result = this.parseOrchestratorValidationResponse(response);
+            
+            if (result.status === 'validated' || result.status === 'updated') {
+                this.log(`✅ Orchestrator validation completed successfully`);
+                this.log(`🔄 Placeholders replaced: ${result.placeholders_replaced}`);
+                this.log(`📊 Tasks count: ${result.tasks_count}`);
+                
+                if (result.structure_valid) {
+                    this.log('✅ Task structure validation passed');
+                }
+                
+                if (result.customization_complete) {
+                    this.log('✅ Task customization completed');
+                }
+                
+                if (result.updates_made && result.updates_made.length > 0) {
+                    this.log('📝 Updates made:');
+                    result.updates_made.forEach(update => this.log(`   - ${update}`));
+                }
+                
+                if (result.issues_found && result.issues_found.length > 0) {
+                    this.log('⚠️ Issues found:', 'WARNING');
+                    result.issues_found.forEach(issue => this.log(`   - ${issue}`, 'WARNING'));
+                }
+            } else {
+                this.log(`❌ Orchestrator validation failed: ${result.next_steps}`, 'ERROR');
+                throw new Error('Orchestrator validation failed');
+            }
+            
+            this.log('✅ Orchestrator validation via AI completed');
+            
+        } catch (error) {
+            this.log(`❌ Error validating orchestrator: ${error.message}`, 'ERROR');
+            throw error;
+        }
+    }
+
+    parseOrchestratorValidationResponse(response) {
+        try {
+            // Try to extract JSON from the response
+            const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+            if (jsonMatch) {
+                return JSON.parse(jsonMatch[1]);
+            }
+            
+            // If no JSON found, return a default structure
+            return {
+                status: 'failed',
+                placeholders_replaced: 0,
+                tasks_count: 0,
+                structure_valid: false,
+                customization_complete: false,
+                validation_passed: false,
+                updates_made: [],
+                issues_found: ['Could not parse AI response'],
+                next_steps: 'Manual review required'
+            };
+        } catch (error) {
+            this.log(`⚠️ Could not parse AI validation response: ${error.message}`, 'WARNING');
+            return {
+                status: 'failed',
+                placeholders_replaced: 0,
+                tasks_count: 0,
+                structure_valid: false,
+                customization_complete: false,
+                validation_passed: false,
+                updates_made: [],
+                issues_found: ['Response parsing failed'],
+                next_steps: 'Manual intervention required'
+            };
+        }
     }
 }
 

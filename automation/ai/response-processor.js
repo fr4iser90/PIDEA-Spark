@@ -174,30 +174,30 @@ export async function extractAIResponse(page, chatSelectors, log) {
 export async function detectResponseComplete(page, currentText, lastLength, log) {
     try {
         // Check for "Completed" completion indicator (Cursor IDE)
-        const completedSelectors = [
-            'span:has-text("Completed")',
-            'div:has-text("Completed")',
-            'span:has-text("file changed")',
-            'div:has-text("file changed")',
-            'span:has-text("files changed")',
-            'div:has-text("files changed")'
-        ];
+        // const completedSelectors = [
+        //     'span:has-text("Completed")',
+        //     'div:has-text("Completed")',
+        //     'span:has-text("file changed")',
+        //     'div:has-text("file changed")',
+        //     'span:has-text("files changed")',
+        //     'div:has-text("files changed")'
+        // ];
         
-        for (const selector of completedSelectors) {
-            const elements = await page.$$(selector);
-            if (elements.length > 0) {
-                for (const element of elements) {
-                    const isVisible = await element.isVisible();
-                    if (isVisible) {
-                        const text = await element.textContent();
-                        if (text && (text.includes('Completed') || text.includes('file changed') || text.includes('files changed'))) {
-                            log(`🔍 Detected completion: "${text}"`);
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
+        // for (const selector of completedSelectors) {
+        //     const elements = await page.$$(selector);
+        //     if (elements.length > 0) {
+        //         for (const element of elements) {
+        //             const isVisible = await element.isVisible();
+        //             if (isVisible) {
+        //                 const text = await element.textContent();
+        //                 if (text && (text.includes('Completed') || text.includes('file changed') || text.includes('files changed'))) {
+        //                     log(`🔍 Detected completion: "${text}"`);
+        //                     return true;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
         
         // Check for "X files edited" completion indicator
         const fileEditSelectors = [
