@@ -1,5 +1,5 @@
 // Review Manager for Cursor Automation CDP Project
-import { generateReviewPrompt } from './prompts.js';
+import { generateReviewPrompt } from '../ai/prompts.js';
 import fs from 'fs';
 import path from 'path';
 

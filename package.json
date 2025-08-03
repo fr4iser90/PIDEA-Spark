@@ -1,23 +1,23 @@
 {
-  "name": "cursor-automation-cdp",
+  "name": "pidea-spark",
   "version": "1.0.0",
-  "description": "Cursor IDE Task Automation System using Chrome DevTools Protocol (CDP)",
-  "main": "automation-workflow-cdp.js",
+  "description": "Simple CLI tool for Cursor IDE automation using Chrome DevTools Protocol",
+  "main": "pidea-spark.js",
   "type": "module",
   "scripts": {
-    "start": "node automation-workflow-cdp.js",
-    "dev": "node automation-workflow-cdp.js --verbose",
-    "test": "node automation-workflow-cdp.js --dry-run",
-    "list": "./run-automation-cdp.sh --list-tasks",
-    "status": "./run-automation-cdp.sh --status"
+    "start": "node pidea-spark.js",
+    "dev": "node pidea-spark.js --verbose",
+    "test": "node pidea-spark.js --dry-run",
+    "list": "node pidea-spark.js --list",
+    "status": "node pidea-spark.js --status"
   },
   "keywords": [
     "cursor",
     "automation",
     "cdp",
     "playwright",
-    "ide",
-    "task-automation"
+    "cli",
+    "ide-automation"
   ],
   "author": "Patrick B.",
   "license": "MIT",

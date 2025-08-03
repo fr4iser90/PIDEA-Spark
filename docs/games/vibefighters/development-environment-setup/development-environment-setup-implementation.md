@@ -273,7 +273,7 @@ export default defineConfig({
 
 ### Final Directory Structure:
 ```
-cursor-automation-cdp/
+pidea-spark/
 ├── src/
 │   ├── main.js                 # Main entry point
 │   ├── game/
