@@ -1,0 +1,39 @@
+{
+  "name": "simple-cursor-automation",
+  "version": "1.0.0",
+  "description": "Simple Cursor Workflow CDP Automation System",
+  "type": "module",
+  "main": "automation-workflow-cdp.js",
+  "scripts": {
+    "start": "node automation-workflow-cdp.js",
+    "dev": "node automation-workflow-cdp.js --verbose",
+    "test": "node automation-workflow-cdp.js --dry-run",
+    "setup": "./run-automation-cdp.sh --setup-chrome",
+    "list": "./run-automation-cdp.sh --list-tasks",
+    "status": "./run-automation-cdp.sh --status"
+  },
+  "keywords": [
+    "cursor",
+    "automation",
+    "cdp",
+    "playwright",
+    "workflow"
+  ],
+  "author": "Simple Cursor Automation",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.54.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fr4iser90/SimpleCursorAutomation.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fr4iser90/SimpleCursorAutomation/issues"
+  },
+  "homepage": "https://github.com/fr4iser90/SimpleCursorAutomation#readme"
+}
