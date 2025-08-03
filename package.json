@@ -24,6 +24,20 @@
   "dependencies": {
     "playwright": "^1.54.2"
   },
+  "path": {
+    "base": "./",
+    "pidea-spark-output": "./pidea-spark-output",
+    "templates": "./automation/templates",
+    "games-templates": "./automation/templates/games",
+    "webapps-templates": "./automation/templates/webapps",
+    "automation": "./automation",
+    "workflows": "./automation/workflows",
+    "core": "./automation/core",
+    "managers": "./automation/managers",
+    "ai": "./automation/ai",
+    "ui": "./automation/ui",
+    "utils": "./automation/utils"
+  },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"

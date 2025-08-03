@@ -25,7 +25,7 @@ import { detectAITyping, extractAIResponse, detectResponseComplete, waitForAIRes
 // Manager Modules
 import { loadTaskDefinitions, buildDependencyGraph, parseDependencies, checkDependencies } from './automation/managers/task-manager.js';
 import { ReviewManager } from './automation/managers/review-manager.js';
-import { initializeBrowser, cleanup } from './automation/managers/browser-manager.js';
+import { initializeBrowser } from './automation/managers/browser-manager.js';
 
 // Workflow Modules
 import { ExecutionWorkflow } from './automation/workflows/execution-workflow.js';
@@ -43,10 +43,10 @@ class CDPTaskAutomationWorkflow {
     constructor() {
         this.config = {
             projectRoot: getConfig('paths.projectRoot', process.cwd()),
-            tasksDir: getConfig('paths.tasksDir', 'docs/09_roadmap/tasks'),
-            orchestratorFile: getConfig('paths.orchestratorFile', 'docs/09_roadmap/tasks/system/orchestrator.md'),
-            progressFile: getConfig('paths.progressFile', 'docs/09_roadmap/tasks/system/progress-tracker.md'),
-            logFile: getConfig('paths.logFile', 'automation-workflow-cdp.log'),
+            tasksDir: getConfig('paths.tasksDir', 'pidea-spark-output'),
+            orchestratorFile: getConfig('paths.orchestratorFile', null), // Will be set per project
+            progressFile: getConfig('paths.progressFile', null), // Will be set per project
+            logFile: getConfig('paths.logFile', 'pidea-spark.log'),
             cdpPort: getConfig('cdp.defaultPort', 9222)
         };
         
@@ -55,6 +55,7 @@ class CDPTaskAutomationWorkflow {
         this.completedTasks = [];
         this.failedTasks = [];
         this.browser = null;
+        this.currentProject = null;
         
         // NEW: Shell Interface and Menu System
         this.shellInterface = new ShellInterface();
@@ -110,6 +111,11 @@ class CDPTaskAutomationWorkflow {
                 // Configuration file created, exit
                 process.exit(0);
                 break;
+                
+            case 'menu':
+                // Show menu mode
+                await this.runMenuMode();
+                return;
                 
             case 'execute':
                 // Continue with normal execution
@@ -184,6 +190,15 @@ class CDPTaskAutomationWorkflow {
     async handleExecuteWorkflow(choice) {
         this.log('🎯 Starting Execute Workflow');
         
+        if (!choice.project) {
+            this.log('❌ No project selected', 'ERROR');
+            return;
+        }
+        
+        this.currentProject = choice.project;
+        this.config.orchestratorFile = choice.project.path;
+        this.config.progressFile = choice.project.systemPath + '/progress-tracker.md';
+        
         // Create new ExecutionWorkflow instance
         const executionWorkflow = new ExecutionWorkflow(this.config, this.log);
         
@@ -219,23 +234,21 @@ class CDPTaskAutomationWorkflow {
     async handlePlanningWorkflow(choice) {
         this.log('📋 Starting Planning Workflow');
         
-        // Create new PlanningWorkflow instance
-        const planningWorkflow = new PlanningWorkflow(this.config, this.log);
-        
-        // Initialize browser for AI communication
-        await planningWorkflow.initializeBrowser();
-        
         switch (choice.action) {
             case 'create':
-                await planningWorkflow.executePlanningWorkflow(choice.gameIdea, choice.projectName);
+                await this.createNewGameProject(choice.gameIdea, choice.projectName);
+                break;
+                
+            case 'convert-idea':
+                await this.convertIdeaToProject(choice.idea, choice.projectName);
                 break;
                 
             case 'edit':
-                await this.editExistingProject(choice.gameName);
+                await this.editExistingProject(choice.project);
                 break;
                 
             case 'regenerate':
-                await this.regenerateProjectPlan(choice.gameName);
+                await this.regenerateProjectPlan(choice.project);
                 break;
                 
             case 'templates':
@@ -247,9 +260,74 @@ class CDPTaskAutomationWorkflow {
         }
     }
 
+    async convertIdeaToProject(idea, projectName) {
+        this.log(`🔄 Converting idea to project: ${idea.name} -> ${projectName}`);
+        
+        try {
+            // Import ProjectDetector dynamically to avoid circular imports
+            const { ProjectDetector } = await import('./automation/core/project-detector.js');
+            const projectDetector = new ProjectDetector();
+            
+            // Create project structure
+            const projectPath = await projectDetector.createProjectStructure(projectName);
+            
+            // Copy idea content to the new project
+            const ideaContent = fs.readFileSync(idea.path, 'utf8');
+            const ideaFilePath = path.join(projectPath, 'idea-source.md');
+            fs.writeFileSync(ideaFilePath, ideaContent);
+            
+            // Update orchestrator with idea information
+            const orchestratorPath = path.join(projectPath, 'system', 'orchestrator.md');
+            const orchestratorContent = fs.readFileSync(orchestratorPath, 'utf8');
+            
+            // Replace placeholder content with idea details
+            const updatedOrchestrator = orchestratorContent
+                .replace(/Automated game development project for: .+/, `Automated game development project for: ${projectName}`)
+                .replace(/## Description[\s\S]*?(?=\n##|\n$)/, `## Description\n${idea.metadata.description || 'Converted from idea'}`)
+                .replace(/## Game Type[\s\S]*?(?=\n##|\n$)/, `## Game Type\n${idea.metadata.gameType || 'To be defined'}`);
+            
+            fs.writeFileSync(orchestratorPath, updatedOrchestrator);
+            
+            // Configure PlanningWorkflow with proper settings
+            const planningConfig = {
+                ...this.config,
+                projectRoot: process.cwd(),
+                tasksDir: 'pidea-spark-output',
+                templateDir: 'automation/templates',
+                projectPath: projectPath,
+                orchestratorFile: orchestratorPath,
+                progressFile: path.join(projectPath, 'system', 'progress-tracker.md')
+            };
+            
+            // Create new PlanningWorkflow instance
+            const planningWorkflow = new PlanningWorkflow(planningConfig, this.log);
+            
+            // Initialize browser for AI communication
+            await planningWorkflow.initializeBrowser();
+            
+            // Execute planning workflow with idea content
+            await planningWorkflow.executePlanningWorkflow(idea.content, projectName);
+            
+            console.log(`✅ Idea "${idea.name}" converted to project "${projectName}" successfully!`);
+            console.log(`📁 Project location: ${projectPath}`);
+            console.log(`📄 Original idea saved as: idea-source.md`);
+            
+        } catch (error) {
+            this.log(`❌ Error converting idea to project: ${error.message}`, 'ERROR');
+            console.error('Full error:', error);
+        }
+    }
+
     // NEW: Handle Debugging Workflow
     async handleDebuggingWorkflow(choice) {
         this.log('🐛 Starting Debugging Workflow');
+        
+        if (!choice.project) {
+            this.log('❌ No project selected', 'ERROR');
+            return;
+        }
+        
+        this.currentProject = choice.project;
         
         switch (choice.action) {
             case 'analyze':
@@ -277,6 +355,13 @@ class CDPTaskAutomationWorkflow {
     async handleTestingWorkflow(choice) {
         this.log('🧪 Starting Testing Workflow');
         
+        if (!choice.project) {
+            this.log('❌ No project selected', 'ERROR');
+            return;
+        }
+        
+        this.currentProject = choice.project;
+        
         switch (choice.action) {
             case 'start':
                 await this.startGame();
@@ -302,6 +387,13 @@ class CDPTaskAutomationWorkflow {
     // NEW: Handle Status Workflow
     async handleStatusWorkflow(choice) {
         this.log('📊 Starting Status Workflow');
+        
+        if (!choice.project) {
+            this.log('❌ No project selected', 'ERROR');
+            return;
+        }
+        
+        this.currentProject = choice.project;
         
         switch (choice.action) {
             case 'progress':
@@ -355,16 +447,54 @@ class CDPTaskAutomationWorkflow {
     async createNewGameProject(gameIdea, projectName) {
         this.log(`🆕 Creating new game project: ${gameIdea}`);
         
-        // Create new PlanningWorkflow instance
-        const planningWorkflow = new PlanningWorkflow(this.config, this.log);
-        
-        // Initialize browser for AI communication
-        await planningWorkflow.initializeBrowser();
-        
-        // Execute planning workflow
-        await planningWorkflow.executePlanningWorkflow(gameIdea, projectName);
-        
-        console.log(`✅ Game project "${gameIdea}" created successfully!`);
+        try {
+            // Import ProjectDetector dynamically to avoid circular imports
+            const { ProjectDetector } = await import('./automation/core/project-detector.js');
+            const projectDetector = new ProjectDetector();
+            
+            // Generate project name if not provided
+            if (!projectName) {
+                projectName = this.generateProjectName(gameIdea);
+            }
+            
+            // Create project structure
+            const projectPath = await projectDetector.createProjectStructure(projectName);
+            
+            // Configure PlanningWorkflow with proper settings
+            const planningConfig = {
+                ...this.config,
+                projectRoot: process.cwd(),
+                tasksDir: 'pidea-spark-output',
+                templateDir: 'automation/templates',
+                projectPath: projectPath,
+                orchestratorFile: path.join(projectPath, 'system', 'orchestrator.md'),
+                progressFile: path.join(projectPath, 'system', 'progress-tracker.md')
+            };
+            
+            // Create new PlanningWorkflow instance
+            const planningWorkflow = new PlanningWorkflow(planningConfig, this.log);
+            
+            // Initialize browser for AI communication
+            await planningWorkflow.initializeBrowser();
+            
+            // Execute planning workflow
+            await planningWorkflow.executePlanningWorkflow(gameIdea, projectName);
+            
+            console.log(`✅ Game project "${projectName}" created successfully!`);
+            console.log(`📁 Project location: ${projectPath}`);
+            
+        } catch (error) {
+            this.log(`❌ Error creating project: ${error.message}`, 'ERROR');
+            console.error('Full error:', error);
+        }
+    }
+
+    generateProjectName(gameIdea) {
+        // Generate a simple project name from the game idea
+        const words = gameIdea.split(' ').slice(0, 3);
+        const name = words.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
+        const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        return `${name}${timestamp}`;
     }
 
     async editExistingProject(gameName) {
@@ -546,10 +676,6 @@ class CDPTaskAutomationWorkflow {
             const progress = task.progress || '0%';
             console.log(`${task.id.toString().padStart(2)}. ${task.name.padEnd(40)} ${status} (${progress})`);
         }
-    }
-
-    async cleanup() {
-        await cleanup(this.browser, this.log);
     }
 
     delay(ms) {

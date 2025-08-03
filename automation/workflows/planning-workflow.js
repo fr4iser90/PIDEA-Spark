@@ -17,11 +17,11 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 // Manager Modules
-import { initializeBrowser, cleanup } from '../managers/browser-manager.js';
+import { initializeBrowser } from '../managers/browser-manager.js';
 import { TemplateManager } from '../file-operations/template-manager.js';
 
 // AI Modules
-import { generatePlanningPrompt, generateTaskCreationPrompt } from '../ai/prompts.js';
+import { generatePlanningPrompt, generateTaskCreationPrompt, generateGameIdeaAnalysisPrompt, generateComprehensiveTaskCreationPrompt } from '../ai/prompts.js';
 import { detectAITyping, extractAIResponse, detectResponseComplete, waitForAIResponse } from '../ai/response-processor.js';
 import { SendToCursor } from '../ai/send-to-cursor.js';
 
@@ -41,7 +41,7 @@ export class PlanningWorkflow {
         this.browser = null;
         this.page = null;
         this.sendToCursor = null;
-        this.templateManager = new TemplateManager();
+        this.templateManager = new TemplateManager(config, log);
         this.gameIdea = null;
         this.gameConfig = null;
         this.customizedTasks = [];
@@ -52,72 +52,48 @@ export class PlanningWorkflow {
         this.log('🎬 Starting CDP-based automated project planning workflow');
         this.gameIdea = gameIdea;
         
-        // PHASE 1: Game Idea Analysis
-        this.log('🔍 PHASE 1: Analyzing game idea...');
+        // Initialize browser for AI communication
+        this.log('🌐 PHASE 0: Initializing browser connection...');
+        await this.initializeBrowser();
+        
+        // PHASE 1: Project Structure Creation
+        this.log('📁 PHASE 1: Creating project structure...');
+        await this.createProjectStructure(projectName);
+        
+        // PHASE 2: Game Idea Analysis
+        this.log('🔍 PHASE 2: Analyzing game idea...');
         await this.analyzeGameIdea();
         
-        // PHASE 2: Template Customization
-        this.log('🎨 PHASE 2: Customizing templates...');
+        // PHASE 3: Template Customization
+        this.log('🎨 PHASE 3: Customizing templates...');
         await this.customizeTemplates();
-        
-        // PHASE 3: Project Structure Creation
-        this.log('📁 PHASE 3: Creating project structure...');
-        await this.createProjectStructure(projectName);
         
         // PHASE 4: Orchestrator Generation
         this.log('📋 PHASE 4: Generating orchestrator...');
         await this.generateOrchestrator();
         
-        // PHASE 5: Task File Creation
-        this.log('📝 PHASE 5: Creating individual task files...');
+        // PHASE 5: AI Task Creation via CDP
+        this.log('🤖 PHASE 5: Creating detailed task files via AI...');
+        await this.createDetailedTaskFilesViaAI();
+        
+        // PHASE 6: Task File Creation
+        this.log('📝 PHASE 6: Creating individual task files...');
         await this.createTaskFiles();
         
-        // PHASE 6: Final Validation
-        this.log('✅ PHASE 6: Final validation...');
+        // PHASE 7: Final Validation
+        this.log('✅ PHASE 7: Final validation...');
         await this.validateProjectStructure();
         
         this.log('🎉 Planning workflow completed successfully!');
         await this.generatePlanningReport();
-        await this.cleanup();
     }
 
     async analyzeGameIdea() {
         this.log('🤖 Analyzing game idea with AI...');
         
-        const analysisPrompt = `# Game Idea Analysis Request
-
-## Game Idea
-${this.gameIdea}
-
-## Analysis Requirements
-Please analyze this game idea and provide:
-
-1. **Game Type**: (Action, Strategy, Puzzle, Simulation, Adventure, Sports, Racing, Horror, Arcade, Educational)
-2. **Primary Genre**: (Specific genre classification)
-3. **Core Mechanics**: (Main gameplay elements)
-4. **Required Features**:
-   - Multiplayer: (Yes/No - if yes, specify type: local, online, co-op, competitive)
-   - 3D Graphics: (Yes/No)
-   - Audio: (Yes/No - music, sound effects, voice acting)
-   - AI: (Yes/No - NPCs, enemies, pathfinding)
-   - Physics: (Yes/No - realistic, arcade-style)
-   - Networking: (Yes/No - online features)
-   - Mobile Support: (Yes/No)
-   - Cloud Saves: (Yes/No)
-   - Modding: (Yes/No)
-   - Analytics: (Yes/No)
-
-5. **Technical Requirements**:
-   - Target Platforms: (Web, Desktop, Mobile, Console)
-   - Performance Requirements: (Low, Medium, High)
-   - Scalability: (Single player, small multiplayer, large multiplayer)
-
-6. **Development Priority**:
-   - Core Features: (List essential features)
-   - Optional Features: (List nice-to-have features)
-   - Excluded Features: (List features to skip)
-
-Please provide a structured analysis that can be used to customize the game development template.`;
+        // Get orchestrator path for AI to update directly
+        const orchestratorPath = path.join(this.projectPath, 'system', 'orchestrator.md');
+        const analysisPrompt = generateGameIdeaAnalysisPrompt(this.gameIdea, orchestratorPath);
 
         try {
             const response = await this.sendToAIviaCDP(analysisPrompt);
@@ -336,8 +312,13 @@ Please provide a structured analysis that can be used to customize the game deve
     }
 
     async createProjectStructure(projectName) {
-        const defaultName = this.gameConfig.gameType.toLowerCase().replace(/\s+/g, '-');
+        const defaultName = this.gameConfig?.gameType?.toLowerCase().replace(/\s+/g, '-') || 'game';
         this.projectPath = projectName || `game-${defaultName}`;
+        
+        // Ensure the path is in pidea-spark-output directory
+        if (!this.projectPath.startsWith('pidea-spark-output/')) {
+            this.projectPath = path.join('pidea-spark-output', this.projectPath);
+        }
         
         this.log(`📁 Creating project structure: ${this.projectPath}`);
         
@@ -347,7 +328,7 @@ Please provide a structured analysis that can be used to customize the game deve
         }
         
         // Create task directory structure
-        const taskPath = path.join(this.projectPath, 'task');
+        const taskPath = path.join(this.projectPath, 'tasks');
         fs.mkdirSync(taskPath, { recursive: true });
         
         // Create system directory
@@ -368,70 +349,238 @@ Please provide a structured analysis that can be used to customize the game deve
     async generateOrchestrator() {
         this.log('📋 Generating orchestrator file...');
         
-        const orchestratorContent = this.generateOrchestratorContent();
+        // Copy the template orchestrator first
+        const templatePath = path.join(__dirname, '../templates/games/system/orchestrator.md');
         const orchestratorPath = path.join(this.projectPath, 'system', 'orchestrator.md');
         
-        fs.writeFileSync(orchestratorPath, orchestratorContent);
+        if (fs.existsSync(templatePath)) {
+            // Copy template content
+            const templateContent = fs.readFileSync(templatePath, 'utf8');
+            fs.writeFileSync(orchestratorPath, templateContent);
+            this.log('✅ Template orchestrator copied');
+        } else {
+            // Fallback to simple orchestrator if template doesn't exist
+            const orchestratorContent = this.generateSimpleOrchestratorContent();
+            fs.writeFileSync(orchestratorPath, orchestratorContent);
+            this.log('⚠️ Template not found, using simple orchestrator');
+        }
+        
         this.log('✅ Orchestrator file generated');
     }
 
-    generateOrchestratorContent() {
-        let content = `# ${this.gameConfig.gameType} Project - Project Orchestrator
+    generateSimpleOrchestratorContent() {
+        // Extract project name from path
+        const projectName = this.projectPath.split('/').pop();
+        
+        let content = `# ${projectName} - Game Project Orchestrator
 
-## Project Overview
-- **Game Name**: ${this.gameConfig.gameType}
-- **Game Type**: ${this.gameConfig.gameType}
-- **Genre**: ${this.gameConfig.primaryGenre}
-- **Status**: 🚀 Planning Phase
-- **Last Updated**: ${new Date().toISOString()}
+## Description
+${this.gameIdea}
+
+## Game Type
+${this.gameConfig.gameType || 'To be defined'}
 
 ## Game Configuration
-- **Core Mechanics**: ${this.gameConfig.coreMechanics}
-- **Target Platforms**: ${this.gameConfig.technical.platforms}
-- **Performance**: ${this.gameConfig.technical.performance}
-- **Multiplayer**: ${this.gameConfig.features.multiplayer ? 'Yes' : 'No'}
-- **3D Graphics**: ${this.gameConfig.features.graphics3d ? 'Yes' : 'No'}
-- **Audio**: ${this.gameConfig.features.audio ? 'Yes' : 'No'}
+- **Primary Genre**: ${this.gameConfig.primaryGenre || 'To be defined'}
+- **Core Mechanics**: ${this.gameConfig.coreMechanics || 'To be defined'}
+- **Target Platforms**: ${this.gameConfig.technical?.platforms || 'To be defined'}
+- **Performance**: ${this.gameConfig.technical?.performance || 'To be defined'}
 
-## Task Status Table
+## Required Features
+- **Multiplayer**: ${this.gameConfig.features?.multiplayer ? 'Yes' : 'No'}
+- **3D Graphics**: ${this.gameConfig.features?.graphics3d ? 'Yes' : 'No'}
+- **Audio**: ${this.gameConfig.features?.audio ? 'Yes' : 'No'}
+- **AI**: ${this.gameConfig.features?.ai ? 'Yes' : 'No'}
+- **Physics**: ${this.gameConfig.features?.physics ? 'Yes' : 'No'}
+- **Networking**: ${this.gameConfig.features?.networking ? 'Yes' : 'No'}
+- **Mobile Support**: ${this.gameConfig.features?.mobile ? 'Yes' : 'No'}
+- **Cloud Saves**: ${this.gameConfig.features?.cloudSaves ? 'Yes' : 'No'}
+- **Modding**: ${this.gameConfig.features?.modding ? 'Yes' : 'No'}
+- **Analytics**: ${this.gameConfig.features?.analytics ? 'Yes' : 'No'}
 
+## Development Priority
+### Core Features
+${this.gameConfig.priority?.core?.map(feature => `- ${feature}`).join('\n') || '- To be defined'}
+
+### Optional Features
+${this.gameConfig.priority?.optional?.map(feature => `- ${feature}`).join('\n') || '- To be defined'}
+
+### Excluded Features
+${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') || '- To be defined'}
+
+## Task Orchestrator
+
+| ID | Task Name | Dependencies | Status | Progress | Notes |
+|----|-----------|--------------|--------|----------|-------|
 `;
 
         let taskId = 1;
         
-        for (const category of this.customizedTasks) {
-            content += `### ${category.id}. ${category.name} (${category.tasks.length} Tasks)\n`;
-            content += `| ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |\n`;
-            content += `|----|-----------|----------|------|--------|----------|--------------|-------|\n`;
-            
-            for (const task of category.tasks) {
-                const estimatedTime = this.estimateTaskTime(task);
-                const dependencies = this.calculateDependencies(task, category);
-                
-                content += `| ${taskId} | ${task.name} | ${category.name.toLowerCase().replace(/\s+/g, '-')} | ${estimatedTime}h | 📋 Ready | 0% | ${dependencies} | ${task.name.toLowerCase()} |\n`;
-                taskId++;
-            }
-            content += '\n';
+        // Generate tasks based on AI analysis
+        const tasks = this.generateTasksFromAnalysis();
+        
+        for (const task of tasks) {
+            content += `| ${taskId} | ${task.name} | ${task.dependencies} | ${task.status} | ${task.progress} | ${task.notes} |\n`;
+            taskId++;
         }
         
-        content += `## Progress Summary
-- **Total Tasks**: ${taskId - 1}
-- **Completed**: 0
-- **In Progress**: 0
-- **Ready**: ${taskId - 1}
-- **Blocked**: 0
-- **Overall Progress**: 0%
-
-## Next Steps
-1. Review and customize project information
-2. Adjust task priorities based on requirements
-3. Set up development environment
-4. Begin with Project Setup (Task 1.1)
-
----
-*Generated by Planning Workflow*`;
+        content += `
+## Project Metadata
+- Created: ${new Date().toISOString()}
+- Status: Planning
+- Version: 1.0.0
+- Total Tasks: ${taskId - 1}
+- Estimated Development Time: ${this.calculateTotalTime(tasks)} hours
+`;
 
         return content;
+    }
+
+    generateTasksFromAnalysis() {
+        const tasks = [];
+        
+        // Always include core setup tasks
+        tasks.push({
+            name: 'Project Setup',
+            dependencies: '-',
+            status: 'Pending',
+            progress: '0%',
+            notes: 'Initial project setup and configuration'
+        });
+        
+        tasks.push({
+            name: 'Game Design Documentation',
+            dependencies: '1',
+            status: 'Pending',
+            progress: '0%',
+            notes: 'Complete game design document based on analysis'
+        });
+        
+        // Add tasks based on features
+        if (this.gameConfig.features?.graphics3d) {
+            tasks.push({
+                name: '3D Graphics Pipeline Setup',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: '3D rendering and graphics system'
+            });
+        } else {
+            tasks.push({
+                name: '2D Graphics System',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: '2D rendering and sprite system'
+            });
+        }
+        
+        if (this.gameConfig.features?.audio) {
+            tasks.push({
+                name: 'Audio System Implementation',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: 'Music, sound effects, and audio management'
+            });
+        }
+        
+        if (this.gameConfig.features?.ai) {
+            tasks.push({
+                name: 'AI System Development',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: 'NPCs, enemies, and AI behavior'
+            });
+        }
+        
+        if (this.gameConfig.features?.physics) {
+            tasks.push({
+                name: 'Physics Engine Integration',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: 'Physics simulation and collision detection'
+            });
+        }
+        
+        if (this.gameConfig.features?.multiplayer) {
+            tasks.push({
+                name: 'Multiplayer System',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: 'Networking and multiplayer functionality'
+            });
+        }
+        
+        if (this.gameConfig.features?.cloudSaves) {
+            tasks.push({
+                name: 'Cloud Save System',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: 'Cloud storage and synchronization'
+            });
+        }
+        
+        if (this.gameConfig.features?.analytics) {
+            tasks.push({
+                name: 'Analytics Implementation',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: 'Game statistics and analytics tracking'
+            });
+        }
+        
+        // Add platform-specific tasks
+        if (this.gameConfig.technical?.platforms?.toLowerCase().includes('web')) {
+            tasks.push({
+                name: 'Web Deployment Setup',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: 'Web build and deployment configuration'
+            });
+        }
+        
+        if (this.gameConfig.features?.mobile) {
+            tasks.push({
+                name: 'Mobile Optimization',
+                dependencies: '1,2',
+                status: 'Pending',
+                progress: '0%',
+                notes: 'Mobile-specific optimizations and UI'
+            });
+        }
+        
+        // Add testing and deployment
+        tasks.push({
+            name: 'Testing Framework',
+            dependencies: '1,2',
+            status: 'Pending',
+            progress: '0%',
+            notes: 'Unit tests and integration testing'
+        });
+        
+        tasks.push({
+            name: 'Final Deployment',
+            dependencies: '1-' + (tasks.length - 1),
+            status: 'Pending',
+            progress: '0%',
+            notes: 'Production deployment and release'
+        });
+        
+        return tasks;
+    }
+
+    calculateTotalTime(tasks) {
+        // Simple time estimation based on task count and complexity
+        const baseTimePerTask = 4; // hours
+        const totalTasks = tasks.length;
+        return totalTasks * baseTimePerTask;
     }
 
     estimateTaskTime(task) {
@@ -463,51 +612,123 @@ Please provide a structured analysis that can be used to customize the game deve
         return '-';
     }
 
+    async createDetailedTaskFilesViaAI() {
+        this.log('🤖 Creating detailed task files via AI...');
+        
+        try {
+            // Get orchestrator path
+            const orchestratorPath = path.join(this.projectPath, 'system', 'orchestrator.md');
+            
+            // Generate comprehensive task creation prompt
+            const prompt = generateComprehensiveTaskCreationPrompt(orchestratorPath, this.gameConfig);
+            
+            this.log('📤 Sending comprehensive task creation request to AI...');
+            const response = await this.sendToAIviaCDP(prompt);
+            
+            // Parse the response to extract task creation results
+            const result = this.parseTaskCreationResponse(response);
+            
+            if (result.status === 'completed') {
+                this.log(`✅ Successfully created ${result.tasks_created} detailed task files`);
+                this.log(`📊 Progress: ${result.tasks_created}/${result.tasks_processed} tasks processed`);
+                this.log(`⏱️ Estimated completion time: ${result.estimated_completion_time}`);
+                
+                if (result.orchestrator_updated) {
+                    this.log('✅ Orchestrator file updated with progress and validation');
+                }
+                
+                if (result.validation_passed) {
+                    this.log('✅ All task dependencies validated successfully');
+                }
+            } else {
+                this.log(`⚠️ Task creation partially completed: ${result.tasks_created}/${result.tasks_processed} tasks`, 'WARNING');
+            }
+            
+            this.log('✅ Detailed task files creation via AI completed');
+            
+        } catch (error) {
+            this.log(`❌ Error creating detailed task files: ${error.message}`, 'ERROR');
+            throw error;
+        }
+    }
+
+    parseTaskCreationResponse(response) {
+        try {
+            // Try to extract JSON from the response
+            const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+            if (jsonMatch) {
+                return JSON.parse(jsonMatch[1]);
+            }
+            
+            // If no JSON found, return a default structure
+            return {
+                status: 'partial',
+                tasks_processed: 0,
+                tasks_created: 0,
+                orchestrator_updated: false,
+                validation_passed: false,
+                next_steps: 'Manual review required',
+                estimated_completion_time: 'Unknown',
+                dependencies_resolved: false
+            };
+        } catch (error) {
+            this.log(`⚠️ Could not parse AI response: ${error.message}`, 'WARNING');
+            return {
+                status: 'failed',
+                tasks_processed: 0,
+                tasks_created: 0,
+                orchestrator_updated: false,
+                validation_passed: false,
+                next_steps: 'Manual intervention required',
+                estimated_completion_time: 'Unknown',
+                dependencies_resolved: false
+            };
+        }
+    }
+
     async createTaskFiles() {
         this.log('📝 Creating individual task files...');
         
-        let taskId = 1;
+        // Generate tasks based on AI analysis
+        const tasks = this.generateTasksFromAnalysis();
         
-        for (const category of this.customizedTasks) {
-            this.log(`📁 Creating tasks for category: ${category.name}`);
+        // Create tasks directory
+        const tasksDir = path.join(this.projectPath, 'tasks');
+        fs.mkdirSync(tasksDir, { recursive: true });
+        
+        for (let i = 0; i < tasks.length; i++) {
+            const task = tasks[i];
+            const taskId = i + 1;
             
-            // Create category directory
-            const categoryDir = path.join(this.projectPath, 'task', category.path.split('/').pop());
-            fs.mkdirSync(categoryDir, { recursive: true });
-            
-            for (const task of category.tasks) {
-                await this.createTaskFilesForTask(task, category, taskId);
-                taskId++;
-            }
+            await this.createTaskFilesForTask(task, taskId, tasksDir);
         }
         
-        this.log(`✅ Created ${taskId - 1} task files`);
+        this.log(`✅ Created ${tasks.length} task files`);
     }
 
-    async createTaskFilesForTask(task, category, taskId) {
-        const taskDir = path.join(this.projectPath, 'task', category.path.split('/').pop(), task.path.split('/').pop());
+    async createTaskFilesForTask(task, taskId, tasksDir) {
+        const taskDir = path.join(tasksDir, `${taskId.toString().padStart(2, '0')}-${task.name.toLowerCase().replace(/\s+/g, '-')}`);
         fs.mkdirSync(taskDir, { recursive: true });
         
         // Create task files
-        await this.createTaskIndex(task, category, taskId, taskDir);
-        await this.createTaskImplementation(task, category, taskId, taskDir);
-        await this.createTaskPhases(task, category, taskId, taskDir);
+        await this.createTaskIndex(task, taskId, taskDir);
+        await this.createTaskImplementation(task, taskId, taskDir);
+        await this.createTaskPhases(task, taskId, taskDir);
     }
 
-    async createTaskIndex(task, category, taskId, taskDir) {
+    async createTaskIndex(task, taskId, taskDir) {
         const indexContent = `# Task ${taskId}: ${task.name}
 
 ## Task Overview
 - **Task ID**: ${taskId}
 - **Task Name**: ${task.name}
-- **Category**: ${category.name}
+- **Dependencies**: ${task.dependencies}
+- **Status**: ${task.status}
+- **Progress**: ${task.progress}
 - **Estimated Time**: ${this.estimateTaskTime(task)}h
-- **Dependencies**: ${this.calculateDependencies(task, category)}
-- **Status**: 📋 Ready
-- **Progress**: 0%
 
 ## Task Description
-${task.name} implementation for ${this.gameConfig.gameType} game.
+${task.notes}
 
 ## Requirements
 - [ ] Core functionality implementation
@@ -516,34 +737,33 @@ ${task.name} implementation for ${this.gameConfig.gameType} game.
 - [ ] Documentation
 
 ## Files
-- **[Implementation](./${task.name.replace(/\s+/g, '-').toLowerCase()}-implementation.md)** - Complete implementation plan
-- **[Phase 1](./${task.name.replace(/\s+/g, '-').toLowerCase()}-phase-1.md)** - Foundation setup
-- **[Phase 2](./${task.name.replace(/\s+/g, '-').toLowerCase()}-phase-2.md)** - Core implementation
-- **[Phase 3](./${task.name.replace(/\s+/g, '-').toLowerCase()}-phase-3.md)** - Integration and testing
+- **[Implementation](./${task.name.toLowerCase().replace(/\s+/g, '-')}-implementation.md)** - Complete implementation plan
+- **[Phase 1](./${task.name.toLowerCase().replace(/\s+/g, '-')}-phase-1.md)** - Foundation setup
+- **[Phase 2](./${task.name.toLowerCase().replace(/\s+/g, '-')}-phase-2.md)** - Core implementation
+- **[Phase 3](./${task.name.toLowerCase().replace(/\s+/g, '-')}-phase-3.md)** - Integration and testing
 
 ---
 *Generated by Planning Workflow*`;
 
-        const indexPath = path.join(taskDir, `${task.name.replace(/\s+/g, '-').toLowerCase()}-index.md`);
+        const indexPath = path.join(taskDir, `${task.name.toLowerCase().replace(/\s+/g, '-')}-index.md`);
         fs.writeFileSync(indexPath, indexContent);
     }
 
-    async createTaskImplementation(task, category, taskId, taskDir) {
+    async createTaskImplementation(task, taskId, taskDir) {
         const implementationContent = `# ${task.name} - Implementation Plan
 
 ## Task Information
 - **Task ID**: ${taskId}
-- **Category**: ${category.name}
+- **Dependencies**: ${task.dependencies}
 - **Estimated Time**: ${this.estimateTaskTime(task)}h
-- **Dependencies**: ${this.calculateDependencies(task, category)}
 
 ## Implementation Overview
-Complete implementation of ${task.name} for ${this.gameConfig.gameType} game.
+${task.notes}
 
 ## Technical Requirements
 - **Tech Stack**: [To be determined based on game requirements]
 - **Architecture**: [To be determined]
-- **Dependencies**: ${this.calculateDependencies(task, category)}
+- **Dependencies**: ${task.dependencies}
 
 ## Implementation Phases
 
@@ -571,11 +791,11 @@ Complete implementation of ${task.name} for ${this.gameConfig.gameType} game.
 ---
 *Generated by Planning Workflow*`;
 
-        const implementationPath = path.join(taskDir, `${task.name.replace(/\s+/g, '-').toLowerCase()}-implementation.md`);
+        const implementationPath = path.join(taskDir, `${task.name.toLowerCase().replace(/\s+/g, '-')}-implementation.md`);
         fs.writeFileSync(implementationPath, implementationContent);
     }
 
-    async createTaskPhases(task, category, taskId, taskDir) {
+    async createTaskPhases(task, taskId, taskDir) {
         const phases = [
             { number: 1, name: 'Foundation Setup', description: 'Create basic structure and setup dependencies' },
             { number: 2, name: 'Core Implementation', description: 'Implement main functionality and add error handling' },
@@ -606,7 +826,7 @@ ${phase.description}
 ---
 *Generated by Planning Workflow*`;
 
-            const phasePath = path.join(taskDir, `${task.name.replace(/\s+/g, '-').toLowerCase()}-phase-${phase.number}.md`);
+            const phasePath = path.join(taskDir, `${task.name.toLowerCase().replace(/\s+/g, '-')}-phase-${phase.number}.md`);
             fs.writeFileSync(phasePath, phaseContent);
         }
     }
@@ -616,7 +836,7 @@ ${phase.description}
         
         const requiredFiles = [
             'system/orchestrator.md',
-            'task',
+            'tasks',
             'docs',
             'mermaid'
         ];
@@ -628,13 +848,43 @@ ${phase.description}
             }
         }
         
-        // Count total tasks
+        // Validate orchestrator file
+        const orchestratorPath = path.join(this.projectPath, 'system', 'orchestrator.md');
+        if (fs.existsSync(orchestratorPath)) {
+            const orchestratorContent = fs.readFileSync(orchestratorPath, 'utf8');
+            
+            // Count tasks in orchestrator
+            const taskMatches = orchestratorContent.match(/\|\s*\d+\.\d+\s*\|/g);
+            const totalTasksInOrchestrator = taskMatches ? taskMatches.length : 0;
+            
+            // Count task directories
+            const tasksDir = path.join(this.projectPath, 'tasks');
+            let createdTaskDirs = 0;
+            if (fs.existsSync(tasksDir)) {
+                const taskDirs = fs.readdirSync(tasksDir, { withFileTypes: true })
+                    .filter(dirent => dirent.isDirectory())
+                    .map(dirent => dirent.name);
+                createdTaskDirs = taskDirs.length;
+            }
+            
+            this.log(`📊 Orchestrator tasks: ${totalTasksInOrchestrator}`);
+            this.log(`📁 Created task directories: ${createdTaskDirs}`);
+            
+            // Validate completion
+            if (createdTaskDirs >= totalTasksInOrchestrator * 0.8) { // Allow 20% tolerance
+                this.log(`✅ Task creation validation passed (${createdTaskDirs}/${totalTasksInOrchestrator} tasks)`);
+            } else {
+                this.log(`⚠️ Task creation incomplete (${createdTaskDirs}/${totalTasksInOrchestrator} tasks)`, 'WARNING');
+            }
+        }
+        
+        // Count total tasks from customized structure
         let totalTasks = 0;
         for (const category of this.customizedTasks) {
             totalTasks += category.tasks.length;
         }
         
-        this.log(`✅ Project structure validated - ${totalTasks} tasks created`);
+        this.log(`✅ Project structure validated - ${totalTasks} tasks planned`);
     }
 
     async generatePlanningReport() {
@@ -697,10 +947,6 @@ ${this.customizedTasks.map(category =>
         } catch (error) {
             throw error;
         }
-    }
-
-    async cleanup() {
-        await cleanup(this.browser, this.log);
     }
 
     delay(ms) {

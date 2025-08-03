@@ -18,7 +18,7 @@ import { dirname } from 'path';
 // Manager Modules
 import { ReviewManager } from '../managers/review-manager.js';
 import { loadTaskDefinitions, buildDependencyGraph, checkDependencies } from '../managers/task-manager.js';
-import { initializeBrowser, cleanup } from '../managers/browser-manager.js';
+import { initializeBrowser } from '../managers/browser-manager.js';
 
 // AI Modules
 import { generateExecutionPrompt } from '../ai/prompts.js';
@@ -184,7 +184,6 @@ export class ExecutionWorkflow {
         }
         
         await this.generateFinalReport();
-        await this.cleanup();
     }
 
     checkDependencies(task) {
@@ -359,10 +358,6 @@ ${this.failedTasks.length > 0 ?
         } catch (error) {
             throw error;
         }
-    }
-
-    async cleanup() {
-        await cleanup(this.browser, this.log);
     }
 
     delay(ms) {

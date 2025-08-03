@@ -199,4 +199,153 @@ Please create detailed implementation files for this task:
 4. Success criteria and validation methods
 
 Provide comprehensive, actionable content for automated development.`;
+}
+
+// NEW: Game Idea Analysis Prompt for Planning Workflow
+export function generateGameIdeaAnalysisPrompt(gameIdea, orchestratorPath = null) {
+    return `# Game Idea Analysis Request
+
+## Game Idea
+${gameIdea}
+
+## Analysis Requirements
+Please analyze this game idea and provide:
+
+1. **Game Type**: (Action, Strategy, Puzzle, Simulation, Adventure, Sports, Racing, Horror, Arcade, Educational)
+2. **Primary Genre**: (Specific genre classification)
+3. **Core Mechanics**: (Main gameplay elements)
+4. **Required Features**:
+   - Multiplayer: (Yes/No - if yes, specify type: local, online, co-op, competitive)
+   - 3D Graphics: (Yes/No)
+   - Audio: (Yes/No - music, sound effects, voice acting)
+   - AI: (Yes/No - NPCs, enemies, pathfinding)
+   - Physics: (Yes/No - realistic, arcade-style)
+   - Networking: (Yes/No - online features)
+   - Mobile Support: (Yes/No)
+   - Cloud Saves: (Yes/No)
+   - Modding: (Yes/No)
+   - Analytics: (Yes/No)
+
+5. **Technical Requirements**:
+   - Target Platforms: (Web, Desktop, Mobile, Console)
+   - Performance Requirements: (Low, Medium, High)
+   - Scalability: (Single player, small multiplayer, large multiplayer)
+
+6. **Development Priority**:
+   - Core Features: (List essential features)
+   - Optional Features: (List nice-to-have features)
+   - Excluded Features: (List features to skip)
+
+## Important Instructions
+${orchestratorPath ? `**DIRECTLY UPDATE THE ORCHESTRATOR FILE**: ${orchestratorPath}
+
+The orchestrator file contains a comprehensive template with 110+ detailed tasks. Please customize it by:
+
+1. **Replace Placeholders**:
+   - [GAME_NAME] → Actual game name
+   - [GAME_TYPE] → Analyzed game type
+   - [GENRE] → Primary genre
+   - [CURRENT_DATE] → Current date
+
+2. **Customize Task Categories**:
+   - Remove tasks that don't apply (e.g., remove multiplayer tasks if multiplayer=No)
+   - Adjust task descriptions to match the game type
+   - Update time estimates based on complexity
+   - Modify dependencies based on game requirements
+
+3. **Add Game-Specific Information**:
+   - Update the description with the game idea
+   - Add core mechanics and features
+   - Include technical requirements
+   - List development priorities
+
+4. **Task Customization**:
+   - Keep relevant tasks from the template
+   - Remove unnecessary tasks (e.g., 3D graphics if 2D only)
+   - Adjust task counts and categories
+   - Update progress summary
+
+**IMPORTANT**: The template has 110+ detailed tasks organized in categories. Don't replace it with a simple list - customize the existing comprehensive structure to match this specific game.
+
+Do not just provide the analysis - actually modify the orchestrator file to reflect the analysis results while preserving the detailed task structure.` : 'Please provide a structured analysis that can be used to customize the game development template.'}
+
+Please provide a structured analysis that can be used to customize the game development template.`;
+} 
+
+// NEW: Comprehensive Task Creation Prompt for all tasks from orchestrator
+export function generateComprehensiveTaskCreationPrompt(orchestratorPath, gameConfig) {
+    return `# Comprehensive Task Creation Request
+
+## Orchestrator File
+Please read and analyze the orchestrator file at: ${orchestratorPath}
+
+## Game Configuration
+- **Game Type**: ${gameConfig.gameType}
+- **Genre**: ${gameConfig.primaryGenre}
+- **Core Mechanics**: ${gameConfig.coreMechanics}
+- **Multiplayer**: ${gameConfig.features.multiplayer ? 'Yes' : 'No'}
+- **3D Graphics**: ${gameConfig.features.graphics3d ? 'Yes' : 'No'}
+- **Audio**: ${gameConfig.features.audio ? 'Yes' : 'No'}
+- **AI**: ${gameConfig.features.ai ? 'Yes' : 'No'}
+- **Physics**: ${gameConfig.features.physics ? 'Yes' : 'No'}
+
+## Request
+Please create detailed implementation files for ALL tasks in the orchestrator:
+
+1. **Read the orchestrator file** and extract all tasks
+2. **For each task**, create detailed implementation files:
+   - Task index with overview and requirements
+   - Implementation plan with technical details
+   - Three-phase breakdown (Foundation, Core, Integration)
+   - Success criteria and validation methods
+   - Dependencies and prerequisites
+   - Estimated time and resources
+
+3. **Update the orchestrator file** with:
+   - Correct progress indicators
+   - Validated dependencies
+   - Updated time estimates
+   - Task status validation
+
+4. **Create task directories** for each task with proper structure
+
+## Response Format
+Please respond with:
+
+\`\`\`json
+{
+  "status": "completed|partial|failed",
+  "tasks_processed": 110,
+  "tasks_created": 110,
+  "orchestrator_updated": true,
+  "validation_passed": true,
+  "next_steps": "All tasks created successfully, ready for development",
+  "estimated_completion_time": "110h",
+  "dependencies_resolved": true,
+  "files_created": ["task-1.1/index.md", "task-1.1/implementation.md", "task-1.1/phases.md", ...],
+  "orchestrator_changes": {
+    "progress_updated": true,
+    "dependencies_validated": true,
+    "time_estimates_adjusted": true
+  }
+}
+\`\`\`
+
+## Important Instructions
+- Process ALL tasks from the orchestrator (should be 110+ tasks)
+- Create comprehensive, actionable content for each task
+- Follow the existing code patterns and conventions
+- Ensure all dependencies are correctly mapped
+- Update the orchestrator file directly with progress and validation
+- Make all content production-ready with proper error handling
+- Add proper documentation and testing requirements for each task
+
+## File Structure
+For each task, create:
+- \`tasks/[task-id]-[task-name]/index.md\` - Task overview and requirements
+- \`tasks/[task-id]-[task-name]/implementation.md\` - Technical implementation plan
+- \`tasks/[task-id]-[task-name]/phases.md\` - Three-phase breakdown
+- \`tasks/[task-id]-[task-name]/validation.md\` - Success criteria and testing
+
+**DIRECTLY UPDATE THE ORCHESTRATOR FILE** with progress and validation results.`;
 } 

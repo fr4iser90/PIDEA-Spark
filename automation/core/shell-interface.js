@@ -78,6 +78,12 @@ export class ShellInterface {
             return { action: 'create-config', config: this.config };
         }
         
+        // Check if menu mode is requested or if no specific action is requested
+        if (this.config.showMenu || (!this.config.listTasks && !this.config.showStatus && !this.config.setupChrome && !this.config.showConfig && !this.config.createConfig)) {
+            this.config.showMenu = true;
+            return { action: 'menu', config: this.config };
+        }
+        
         // Check prerequisites
         await this.checkPrerequisites();
         

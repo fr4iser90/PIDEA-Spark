@@ -7,8 +7,11 @@
  * Handles user input and workflow selection
  */
 
+import { ProjectDetector } from './project-detector.js';
+
 export class MenuSystem {
     constructor() {
+        this.projectDetector = new ProjectDetector();
         this.setupLogging();
     }
 
@@ -23,15 +26,45 @@ export class MenuSystem {
     async showMainMenu() {
         this.log('🎮 Showing main menu');
         
-        console.log('\n🎮 Game Automation Workflow Menu');
-        console.log('================================\n');
+        console.log('\n🎮 Pidea Spark - Game Automation Menu');
+        console.log('=====================================\n');
         
-        console.log('1. 🎯 Execute Workflow');
+        // Detect available projects and ideas
+        const { projects, ideas } = await this.projectDetector.detectProjects();
+        
+        if (projects.length > 0) {
+            console.log('📁 Available Projects:');
+            console.log('======================');
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                const stats = project.stats;
+                const progress = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                console.log(`${i + 1}. ${project.name} (${progress}% - ${stats.completed}/${stats.total} tasks)`);
+            }
+            console.log('');
+        }
+        
+        if (ideas.length > 0) {
+            console.log('💡 Available Ideas:');
+            console.log('==================');
+            for (let i = 0; i < ideas.length; i++) {
+                const idea = ideas[i];
+                const title = idea.metadata.title || idea.name;
+                console.log(`${i + 1}. ${title} (idea - can be converted to project)`);
+            }
+            console.log('');
+        }
+        
+        console.log('🎯 Workflow Options:');
+        console.log('===================\n');
+        
+        console.log('1. 🚀 Execute Workflow');
         console.log('   - Execute existing game project tasks');
         console.log('   - Run automation on current project\n');
         
         console.log('2. 📋 Planning Workflow');
         console.log('   - Create new game project');
+        console.log('   - Convert ideas to projects');
         console.log('   - Plan tasks and generate orchestrator\n');
         
         console.log('3. 🐛 Debugging Workflow');
@@ -54,7 +87,7 @@ export class MenuSystem {
         console.log('   - Exit automation system\n');
         
         const choice = await this.getUserChoice();
-        return await this.handleMenuChoice(choice);
+        return await this.handleMenuChoice(choice, projects, ideas);
     }
 
     async getUserChoice(prompt = 'Enter your choice (0-6): ', min = 0, max = 6) {
@@ -75,7 +108,7 @@ export class MenuSystem {
         });
     }
 
-    async handleMenuChoice(choice) {
+    async handleMenuChoice(choice, projects = [], ideas = []) {
         switch (choice) {
             case 0:
                 this.log('👋 Exiting automation system');
@@ -83,19 +116,19 @@ export class MenuSystem {
                 break;
                 
             case 1:
-                return await this.executeWorkflowMenu();
+                return await this.executeWorkflowMenu(projects);
                 
             case 2:
-                return await this.showPlanningMenu();
+                return await this.showPlanningMenu(projects, ideas);
                 
             case 3:
-                return await this.debuggingWorkflowMenu();
+                return await this.debuggingWorkflowMenu(projects);
                 
             case 4:
-                return await this.testingWorkflowMenu();
+                return await this.testingWorkflowMenu(projects);
                 
             case 5:
-                return await this.statusMenu();
+                return await this.statusMenu(projects);
                 
             case 6:
                 return await this.settingsMenu();
@@ -106,9 +139,34 @@ export class MenuSystem {
         }
     }
 
-    async executeWorkflowMenu() {
+    async executeWorkflowMenu(projects) {
         console.log('\n🎯 Execute Workflow Menu');
         console.log('=======================\n');
+        
+        // Show project selection if multiple projects exist
+        let selectedProject = null;
+        if (projects.length > 1) {
+            console.log('📁 Select Project:');
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                console.log(`${i + 1}. ${project.name}`);
+            }
+            console.log('0. Back to Main Menu\n');
+            
+            const projectChoice = await this.getUserChoice('Select project (0-' + projects.length + '): ', 0, projects.length);
+            if (projectChoice === 0) {
+                return await this.showMainMenu();
+            }
+            selectedProject = projects[projectChoice - 1];
+        } else if (projects.length === 1) {
+            selectedProject = projects[0];
+            console.log(`📁 Using project: ${selectedProject.name}\n`);
+        } else {
+            console.log('⚠️ No projects found. Create a project first.\n');
+        }
+        
+        console.log('🎯 Execute Options:');
+        console.log('==================\n');
         
         console.log('1. 🚀 Execute All Tasks');
         console.log('   - Execute all pending tasks\n');
@@ -130,48 +188,92 @@ export class MenuSystem {
             case 0:
                 return await this.showMainMenu();
             case 1:
-                return { workflow: 'execute', action: 'all', gameName: null };
+                return { workflow: 'execute', action: 'all', project: selectedProject };
             case 2:
-                return await this.getSpecificTask();
+                return await this.getSpecificTask(selectedProject);
             case 3:
-                return { workflow: 'execute', action: 'list', gameName: null };
+                return { workflow: 'execute', action: 'list', project: selectedProject };
             case 4:
-                return await this.getStartTaskId();
+                return await this.getStartTaskId(selectedProject);
             default:
-                return await this.executeWorkflowMenu();
+                return await this.executeWorkflowMenu(projects);
         }
     }
 
-    async showPlanningMenu() {
+    async showPlanningMenu(projects, ideas) {
         console.log('\n📋 Planning Workflow Menu');
-        console.log('========================');
-        console.log('1. Create New Game Project');
-        console.log('2. Edit Existing Project');
-        console.log('3. Regenerate Project Plan');
-        console.log('4. Show Project Templates');
-        console.log('5. Back to Main Menu');
+        console.log('========================\n');
         
-        const choice = await this.getUserChoice('Enter your choice (1-5): ', 1, 5);
+        console.log('1. 🆕 Create New Game Project');
+        console.log('   - Start a new game development project\n');
         
-        switch (choice) {
-            case 1:
-                return await this.handleCreateNewProject();
-            case 2:
-                return await this.handleEditProject();
-            case 3:
-                return await this.handleRegeneratePlan();
-            case 4:
-                return await this.handleShowTemplates();
-            case 5:
-                return { workflow: 'main', action: 'back' };
-            default:
-                return { workflow: 'main', action: 'back' };
+        if (ideas.length > 0) {
+            console.log('2. 🔄 Convert Idea to Project');
+            console.log('   - Convert existing idea to full project\n');
+            
+            console.log('3. 📝 Edit Existing Project');
+            console.log('   - Modify an existing project\n');
+            
+            console.log('4. 🔄 Regenerate Project Plan');
+            console.log('   - Recreate the project plan\n');
+            
+            console.log('5. 📊 Show Project Templates');
+            console.log('   - View available templates\n');
+            
+            console.log('0. ⬅️ Back to Main Menu\n');
+            
+            const choice = await this.getUserChoice('Enter your choice (0-5): ', 0, 5);
+            
+            switch (choice) {
+                case 0:
+                    return await this.showMainMenu();
+                case 1:
+                    return await this.handleCreateNewProject();
+                case 2:
+                    return await this.handleConvertIdeaToProject(ideas);
+                case 3:
+                    return await this.handleEditProject(projects);
+                case 4:
+                    return await this.handleRegeneratePlan(projects);
+                case 5:
+                    return await this.handleShowTemplates();
+                default:
+                    return await this.showPlanningMenu(projects, ideas);
+            }
+        } else {
+            console.log('2. 📝 Edit Existing Project');
+            console.log('   - Modify an existing project\n');
+            
+            console.log('3. 🔄 Regenerate Project Plan');
+            console.log('   - Recreate the project plan\n');
+            
+            console.log('4. 📊 Show Project Templates');
+            console.log('   - View available templates\n');
+            
+            console.log('0. ⬅️ Back to Main Menu\n');
+            
+            const choice = await this.getUserChoice('Enter your choice (0-4): ', 0, 4);
+            
+            switch (choice) {
+                case 0:
+                    return await this.showMainMenu();
+                case 1:
+                    return await this.handleCreateNewProject();
+                case 2:
+                    return await this.handleEditProject(projects);
+                case 3:
+                    return await this.handleRegeneratePlan(projects);
+                case 4:
+                    return await this.handleShowTemplates();
+                default:
+                    return await this.showPlanningMenu(projects, ideas);
+            }
         }
     }
 
     async handleCreateNewProject() {
         console.log('\n🆕 Create New Game Project');
-        console.log('=========================');
+        console.log('=========================\n');
         
         // Get game idea
         const gameIdea = await this.getUserInput('Enter your game idea (describe the game concept): ');
@@ -191,54 +293,162 @@ export class MenuSystem {
         };
     }
 
-    async handleEditProject() {
+    async handleEditProject(projects) {
         console.log('\n📝 Edit Existing Project');
-        console.log('======================');
+        console.log('======================\n');
         
-        const gameName = await this.getUserInput('Enter game name to edit: ');
-        if (!gameName || gameName.trim() === '') {
-            console.log('❌ Game name is required');
+        if (projects.length === 0) {
+            console.log('❌ No projects found. Create a project first.');
             return { workflow: 'planning', action: 'back' };
         }
+        
+        console.log('📁 Select Project to Edit:');
+        for (let i = 0; i < projects.length; i++) {
+            const project = projects[i];
+            console.log(`${i + 1}. ${project.name}`);
+        }
+        console.log('0. Back to Planning Menu\n');
+        
+        const choice = await this.getUserChoice('Select project (0-' + projects.length + '): ', 0, projects.length);
+        if (choice === 0) {
+            return await this.showPlanningMenu(projects, []); // Pass empty ideas for now
+        }
+        
+        const selectedProject = projects[choice - 1];
         
         return {
             workflow: 'planning',
             action: 'edit',
-            gameName: gameName.trim()
+            project: selectedProject
         };
     }
 
-    async handleRegeneratePlan() {
+    async handleRegeneratePlan(projects) {
         console.log('\n🔄 Regenerate Project Plan');
-        console.log('======================');
+        console.log('=========================\n');
         
-        const gameName = await this.getUserInput('Enter game name to regenerate: ');
-        if (!gameName || gameName.trim() === '') {
-            console.log('❌ Game name is required');
+        if (projects.length === 0) {
+            console.log('❌ No projects found. Create a project first.');
             return { workflow: 'planning', action: 'back' };
         }
+        
+        console.log('📁 Select Project to Regenerate:');
+        for (let i = 0; i < projects.length; i++) {
+            const project = projects[i];
+            console.log(`${i + 1}. ${project.name}`);
+        }
+        console.log('0. Back to Planning Menu\n');
+        
+        const choice = await this.getUserChoice('Select project (0-' + projects.length + '): ', 0, projects.length);
+        if (choice === 0) {
+            return await this.showPlanningMenu(projects, []); // Pass empty ideas for now
+        }
+        
+        const selectedProject = projects[choice - 1];
         
         return {
             workflow: 'planning',
             action: 'regenerate',
-            gameName: gameName.trim()
+            project: selectedProject
         };
     }
 
     async handleShowTemplates() {
         console.log('\n📊 Show Project Templates');
-        console.log('======================');
+        console.log('=========================\n');
         
         return {
             workflow: 'planning',
-            action: 'templates',
-            gameName: null
+            action: 'templates'
         };
     }
 
-    async debuggingWorkflowMenu() {
+    async handleConvertIdeaToProject(ideas) {
+        console.log('\n🔄 Convert Idea to Project');
+        console.log('=========================\n');
+        
+        console.log('💡 Select Idea to Convert:');
+        for (let i = 0; i < ideas.length; i++) {
+            const idea = ideas[i];
+            const title = idea.metadata.title || idea.name;
+            const description = idea.metadata.description || 'No description available';
+            console.log(`${i + 1}. ${title}`);
+            console.log(`   ${description}`);
+            console.log('');
+        }
+        console.log('0. Back to Planning Menu\n');
+        
+        const choice = await this.getUserChoice('Select idea (0-' + ideas.length + '): ', 0, ideas.length);
+        if (choice === 0) {
+            return await this.showPlanningMenu([], ideas);
+        }
+        
+        const selectedIdea = ideas[choice - 1];
+        
+        // Show idea details
+        console.log(`\n📋 Idea Details: ${selectedIdea.metadata.title || selectedIdea.name}`);
+        console.log('=====================================');
+        console.log(`Description: ${selectedIdea.metadata.description || 'No description'}`);
+        if (selectedIdea.metadata.gameType) {
+            console.log(`Game Type: ${selectedIdea.metadata.gameType}`);
+        }
+        if (selectedIdea.metadata.genre) {
+            console.log(`Genre: ${selectedIdea.metadata.genre}`);
+        }
+        console.log(`\nContent Preview:`);
+        console.log(selectedIdea.content);
+        console.log('\n');
+        
+        // Confirm conversion
+        const confirm = await this.getUserInput('Convert this idea to a project? (y/N): ');
+        if (!confirm.toLowerCase().startsWith('y')) {
+            console.log('❌ Conversion cancelled');
+            return await this.showPlanningMenu([], ideas);
+        }
+        
+        // Get project name
+        //const projectName = await this.getUserInput('Enter project name (optional, press Enter to use idea name): ');
+        // Auto-generate project name from idea path
+        const projectName = selectedIdea.name;
+        console.log(`📁 Project name: ${projectName} (auto-generated from idea path)`);
+        
+        return {
+            workflow: 'planning',
+            action: 'convert-idea',
+            idea: selectedIdea,
+           // projectName: projectName.trim() || selectedIdea.name
+            projectName: projectName
+        };
+    }
+
+    async debuggingWorkflowMenu(projects) {
         console.log('\n🐛 Debugging Workflow Menu');
         console.log('=========================\n');
+        
+        // Show project selection if multiple projects exist
+        let selectedProject = null;
+        if (projects.length > 1) {
+            console.log('📁 Select Project:');
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                console.log(`${i + 1}. ${project.name}`);
+            }
+            console.log('0. Back to Main Menu\n');
+            
+            const projectChoice = await this.getUserChoice('Select project (0-' + projects.length + '): ', 0, projects.length);
+            if (projectChoice === 0) {
+                return await this.showMainMenu();
+            }
+            selectedProject = projects[projectChoice - 1];
+        } else if (projects.length === 1) {
+            selectedProject = projects[0];
+            console.log(`📁 Using project: ${selectedProject.name}\n`);
+        } else {
+            console.log('⚠️ No projects found. Create a project first.\n');
+        }
+        
+        console.log('🐛 Debugging Options:');
+        console.log('====================\n');
         
         console.log('1. 🔍 Analyze Project Issues');
         console.log('   - Find and analyze problems\n');
@@ -260,21 +470,46 @@ export class MenuSystem {
             case 0:
                 return await this.showMainMenu();
             case 1:
-                return { workflow: 'debugging', action: 'analyze', gameName: null };
+                return { workflow: 'debugging', action: 'analyze', project: selectedProject };
             case 2:
-                return { workflow: 'debugging', action: 'fix', gameName: null };
+                return { workflow: 'debugging', action: 'fix', project: selectedProject };
             case 3:
-                return { workflow: 'debugging', action: 'report', gameName: null };
+                return { workflow: 'debugging', action: 'report', project: selectedProject };
             case 4:
-                return { workflow: 'debugging', action: 'manual', gameName: null };
+                return { workflow: 'debugging', action: 'manual', project: selectedProject };
             default:
-                return await this.debuggingWorkflowMenu();
+                return await this.debuggingWorkflowMenu(projects);
         }
     }
 
-    async testingWorkflowMenu() {
+    async testingWorkflowMenu(projects) {
         console.log('\n🧪 Testing Workflow Menu');
         console.log('=======================\n');
+        
+        // Show project selection if multiple projects exist
+        let selectedProject = null;
+        if (projects.length > 1) {
+            console.log('📁 Select Project:');
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                console.log(`${i + 1}. ${project.name}`);
+            }
+            console.log('0. Back to Main Menu\n');
+            
+            const projectChoice = await this.getUserChoice('Select project (0-' + projects.length + '): ', 0, projects.length);
+            if (projectChoice === 0) {
+                return await this.showMainMenu();
+            }
+            selectedProject = projects[projectChoice - 1];
+        } else if (projects.length === 1) {
+            selectedProject = projects[0];
+            console.log(`📁 Using project: ${selectedProject.name}\n`);
+        } else {
+            console.log('⚠️ No projects found. Create a project first.\n');
+        }
+        
+        console.log('🧪 Testing Options:');
+        console.log('==================\n');
         
         console.log('1. 🚀 Start Game');
         console.log('   - Launch the game for testing\n');
@@ -296,21 +531,46 @@ export class MenuSystem {
             case 0:
                 return await this.showMainMenu();
             case 1:
-                return { workflow: 'testing', action: 'start', gameName: null };
+                return { workflow: 'testing', action: 'start', project: selectedProject };
             case 2:
-                return { workflow: 'testing', action: 'automated', gameName: null };
+                return { workflow: 'testing', action: 'automated', project: selectedProject };
             case 3:
-                return { workflow: 'testing', action: 'performance', gameName: null };
+                return { workflow: 'testing', action: 'performance', project: selectedProject };
             case 4:
-                return { workflow: 'testing', action: 'report', gameName: null };
+                return { workflow: 'testing', action: 'report', project: selectedProject };
             default:
-                return await this.testingWorkflowMenu();
+                return await this.testingWorkflowMenu(projects);
         }
     }
 
-    async statusMenu() {
+    async statusMenu(projects) {
         console.log('\n📊 Status & Reports Menu');
         console.log('========================\n');
+        
+        // Show project selection if multiple projects exist
+        let selectedProject = null;
+        if (projects.length > 1) {
+            console.log('📁 Select Project:');
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                console.log(`${i + 1}. ${project.name}`);
+            }
+            console.log('0. Back to Main Menu\n');
+            
+            const projectChoice = await this.getUserChoice('Select project (0-' + projects.length + '): ', 0, projects.length);
+            if (projectChoice === 0) {
+                return await this.showMainMenu();
+            }
+            selectedProject = projects[projectChoice - 1];
+        } else if (projects.length === 1) {
+            selectedProject = projects[0];
+            console.log(`📁 Using project: ${selectedProject.name}\n`);
+        } else {
+            console.log('⚠️ No projects found. Create a project first.\n');
+        }
+        
+        console.log('📊 Status Options:');
+        console.log('=================\n');
         
         console.log('1. 📈 Project Progress');
         console.log('   - Show current project status\n');
@@ -332,15 +592,15 @@ export class MenuSystem {
             case 0:
                 return await this.showMainMenu();
             case 1:
-                return { workflow: 'status', action: 'progress', gameName: null };
+                return { workflow: 'status', action: 'progress', project: selectedProject };
             case 2:
-                return { workflow: 'status', action: 'summary', gameName: null };
+                return { workflow: 'status', action: 'summary', project: selectedProject };
             case 3:
-                return { workflow: 'status', action: 'detailed', gameName: null };
+                return { workflow: 'status', action: 'detailed', project: selectedProject };
             case 4:
-                return { workflow: 'status', action: 'timeline', gameName: null };
+                return { workflow: 'status', action: 'timeline', project: selectedProject };
             default:
-                return await this.statusMenu();
+                return await this.statusMenu(projects);
         }
     }
 
@@ -368,69 +628,36 @@ export class MenuSystem {
             case 0:
                 return await this.showMainMenu();
             case 1:
-                return { workflow: 'settings', action: 'cdp', gameName: null };
+                return { workflow: 'settings', action: 'cdp' };
             case 2:
-                return { workflow: 'settings', action: 'templates', gameName: null };
+                return { workflow: 'settings', action: 'templates' };
             case 3:
-                return { workflow: 'settings', action: 'ai', gameName: null };
+                return { workflow: 'settings', action: 'ai' };
             case 4:
-                return { workflow: 'settings', action: 'paths', gameName: null };
+                return { workflow: 'settings', action: 'paths' };
             default:
                 return await this.settingsMenu();
         }
     }
 
-    async getSpecificTask() {
+    async getSpecificTask(project) {
         console.log('\nEnter task ID to execute: ');
         
         return new Promise((resolve) => {
             process.stdin.once('data', (data) => {
                 const taskId = parseInt(data.toString().trim());
-                resolve({ workflow: 'execute', action: 'specific', taskId: taskId, gameName: null });
+                resolve({ workflow: 'execute', action: 'specific', taskId: taskId, project: project });
             });
         });
     }
 
-    async getStartTaskId() {
+    async getStartTaskId(project) {
         console.log('\nEnter task ID to start from: ');
         
         return new Promise((resolve) => {
             process.stdin.once('data', (data) => {
                 const taskId = parseInt(data.toString().trim());
-                resolve({ workflow: 'execute', action: 'from', taskId: taskId, gameName: null });
-            });
-        });
-    }
-
-    async createNewGameProject() {
-        console.log('\nEnter game name: ');
-        
-        return new Promise((resolve) => {
-            process.stdin.once('data', (data) => {
-                const gameName = data.toString().trim();
-                resolve({ workflow: 'planning', action: 'create', gameName: gameName });
-            });
-        });
-    }
-
-    async editExistingProject() {
-        console.log('\nEnter game name to edit: ');
-        
-        return new Promise((resolve) => {
-            process.stdin.once('data', (data) => {
-                const gameName = data.toString().trim();
-                resolve({ workflow: 'planning', action: 'edit', gameName: gameName });
-            });
-        });
-    }
-
-    async regenerateProjectPlan() {
-        console.log('\nEnter game name to regenerate: ');
-        
-        return new Promise((resolve) => {
-            process.stdin.once('data', (data) => {
-                const gameName = data.toString().trim();
-                resolve({ workflow: 'planning', action: 'regenerate', gameName: gameName });
+                resolve({ workflow: 'execute', action: 'from', taskId: taskId, project: project });
             });
         });
     }

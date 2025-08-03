@@ -31,12 +31,4 @@ export async function initializeBrowser(cdpPort, log) {
         log('🔧 Try running: google-chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-debug', 'INFO');
         throw error;
     }
-}
-
-export async function cleanup(browser, log) {
-    if (browser) {
-        // Don't close the browser, just disconnect
-        await browser.disconnect();
-        log('🔌 Disconnected from browser');
-    }
 } 
