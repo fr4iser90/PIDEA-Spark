@@ -5,6 +5,7 @@
  * 
  * Automatically detects and lists all available game projects
  * Scans pidea-spark-output directory for orchestrator files
+ * Integrates with WorkspaceFinder to create projects in correct Cursor workspace
  */
 
 import fs from 'fs';
@@ -16,8 +17,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export class ProjectDetector {
-    constructor() {
+    constructor(config = {}) {
         this.outputDir = 'pidea-spark-output';
+        this.config = config;
+        this.workspacePath = null;
         this.setupLogging();
     }
 
@@ -27,6 +30,41 @@ export class ProjectDetector {
             const logEntry = `[${timestamp}] [${level}] ${message}`;
             console.log(logEntry);
         };
+    }
+
+    async initialize() {
+        // Try to find Cursor workspace
+        await this.findCursorWorkspace();
+    }
+
+    async findCursorWorkspace() {
+        try {
+            this.log('🔍 Looking for Cursor IDE workspace...');
+            
+            // Import WorkspaceFinder dynamically
+            const WorkspaceFinder = (await import('../file-operations/find-workspace.js')).default;
+            const finder = new WorkspaceFinder(this.config.cdpPort || 9222);
+            
+            const connected = await finder.connect();
+            if (connected) {
+                const workspaceInfo = await finder.getWorkspaceInfo();
+                this.workspacePath = workspaceInfo.workspacePath;
+                
+                if (this.workspacePath) {
+                    this.log(`✅ Found Cursor workspace: ${this.workspacePath}`);
+                    // Update output directory to be in the workspace
+                    this.outputDir = path.join(this.workspacePath, 'pidea-spark-output');
+                } else {
+                    this.log('⚠️ Could not find Cursor workspace, using local directory');
+                }
+                
+                await finder.disconnect();
+            } else {
+                this.log('⚠️ Could not connect to Cursor IDE, using local directory');
+            }
+        } catch (error) {
+            this.log(`⚠️ Error finding workspace: ${error.message}, using local directory`);
+        }
     }
 
     async detectProjects() {
@@ -275,6 +313,11 @@ export class ProjectDetector {
     async createProjectStructure(projectName) {
         this.log(`🆕 Creating project structure for: ${projectName}`);
         
+        // Ensure we have the latest workspace info
+        if (!this.workspacePath) {
+            await this.findCursorWorkspace();
+        }
+        
         const projectPath = path.join(this.outputDir, projectName);
         const systemPath = path.join(projectPath, 'system');
         const tasksPath = path.join(projectPath, 'tasks');
@@ -359,6 +402,15 @@ To be defined
 
     getProgressPath(projectName) {
         return path.join(this.outputDir, projectName, 'system', 'progress-tracker.md');
+    }
+
+    // NEW: Get workspace information
+    getWorkspaceInfo() {
+        return {
+            workspacePath: this.workspacePath,
+            outputDir: this.outputDir,
+            isInWorkspace: !!this.workspacePath
+        };
     }
 }
 

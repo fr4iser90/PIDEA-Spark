@@ -8,6 +8,7 @@
  * - Template structure management
  * - Template file generation
  * - Template customization
+ * - Integrates with WorkspaceFinder for correct workspace detection
  */
 
 import fs from 'fs';
@@ -19,10 +20,53 @@ export class TemplateManager {
         this.log = log;
         this.templateDir = config.templateDir || 'docs/template/games/template';
         this.gamesDir = config.gamesDir || 'docs/games';
+        this.workspacePath = null;
+        this.outputDir = 'pidea-spark-output';
+    }
+
+    async initialize() {
+        // Try to find Cursor workspace
+        await this.findCursorWorkspace();
+    }
+
+    async findCursorWorkspace() {
+        try {
+            this.log('🔍 Looking for Cursor IDE workspace...');
+            
+            // Import WorkspaceFinder dynamically
+            const WorkspaceFinder = (await import('./find-workspace.js')).default;
+            const finder = new WorkspaceFinder(this.config.cdpPort || 9222);
+            
+            const connected = await finder.connect();
+            if (connected) {
+                const workspaceInfo = await finder.getWorkspaceInfo();
+                this.workspacePath = workspaceInfo.workspacePath;
+                
+                if (this.workspacePath) {
+                    this.log(`✅ Found Cursor workspace: ${this.workspacePath}`);
+                    // Update output directory to be in the workspace
+                    this.outputDir = path.join(this.workspacePath, 'pidea-spark-output');
+                    this.gamesDir = path.join(this.workspacePath, 'pidea-spark-output');
+                } else {
+                    this.log('⚠️ Could not find Cursor workspace, using local directory');
+                }
+                
+                await finder.disconnect();
+            } else {
+                this.log('⚠️ Could not connect to Cursor IDE, using local directory');
+            }
+        } catch (error) {
+            this.log(`⚠️ Error finding workspace: ${error.message}, using local directory`);
+        }
     }
 
     async createGameProjectTemplate(gameName, gameType, genre) {
         this.log(`🎮 Creating game project template: ${gameName}`);
+        
+        // Ensure we have the latest workspace info
+        if (!this.workspacePath) {
+            await this.findCursorWorkspace();
+        }
         
         const gameDir = path.join(this.gamesDir, gameName);
         

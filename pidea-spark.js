@@ -131,6 +131,22 @@ class CDPTaskAutomationWorkflow {
         
         // OLD: Original initialization logic
         this.parseArguments();
+        
+        // NEW: Initialize with workspace detection
+        const { ProjectDetector } = await import('./automation/core/project-detector.js');
+        const projectDetector = new ProjectDetector(this.config);
+        await projectDetector.initialize();
+        
+        const workspaceInfo = projectDetector.getWorkspaceInfo();
+        if (workspaceInfo.isInWorkspace) {
+            this.log(`🎯 Using Cursor workspace: ${workspaceInfo.workspacePath}`);
+            // Update config to use workspace paths
+            this.config.projectRoot = workspaceInfo.workspacePath;
+            this.config.tasksDir = workspaceInfo.outputDir;
+        } else {
+            this.log(`⚠️ Using local directory (Cursor workspace not found)`);
+        }
+        
         await this.loadTaskDefinitions();
         this.buildDependencyGraph();
         await this.initializeBrowser();
@@ -196,8 +212,24 @@ class CDPTaskAutomationWorkflow {
         }
         
         this.currentProject = choice.project;
-        this.config.orchestratorFile = choice.project.path;
-        this.config.progressFile = choice.project.systemPath + '/progress-tracker.md';
+        
+        // Check if project path is in workspace or local
+        const { ProjectDetector } = await import('./automation/core/project-detector.js');
+        const projectDetector = new ProjectDetector(this.config);
+        await projectDetector.initialize();
+        
+        const workspaceInfo = projectDetector.getWorkspaceInfo();
+        
+        // Update project paths based on workspace detection
+        if (workspaceInfo.isInWorkspace) {
+            this.config.orchestratorFile = path.join(workspaceInfo.outputDir, choice.project.name, 'system', 'orchestrator.md');
+            this.config.progressFile = path.join(workspaceInfo.outputDir, choice.project.name, 'system', 'progress-tracker.md');
+            this.log(`🎯 Using workspace project: ${workspaceInfo.workspacePath}`);
+        } else {
+            this.config.orchestratorFile = choice.project.path;
+            this.config.progressFile = choice.project.systemPath + '/progress-tracker.md';
+            this.log(`⚠️ Using local project (workspace not found)`);
+        }
         
         // Create new ExecutionWorkflow instance
         const executionWorkflow = new ExecutionWorkflow(this.config, this.log);
@@ -266,7 +298,10 @@ class CDPTaskAutomationWorkflow {
         try {
             // Import ProjectDetector dynamically to avoid circular imports
             const { ProjectDetector } = await import('./automation/core/project-detector.js');
-            const projectDetector = new ProjectDetector();
+            const projectDetector = new ProjectDetector(this.config);
+            
+            // Initialize with workspace detection
+            await projectDetector.initialize();
             
             // Create project structure
             const projectPath = await projectDetector.createProjectStructure(projectName);
@@ -308,8 +343,16 @@ class CDPTaskAutomationWorkflow {
             // Execute planning workflow with idea content
             await planningWorkflow.executePlanningWorkflow(idea.content, projectName);
             
+            // Get workspace info for user feedback
+            const workspaceInfo = projectDetector.getWorkspaceInfo();
+            
             console.log(`✅ Idea "${idea.name}" converted to project "${projectName}" successfully!`);
             console.log(`📁 Project location: ${projectPath}`);
+            if (workspaceInfo.isInWorkspace) {
+                console.log(`🎯 Created in Cursor workspace: ${workspaceInfo.workspacePath}`);
+            } else {
+                console.log(`⚠️ Created in local directory (Cursor workspace not found)`);
+            }
             console.log(`📄 Original idea saved as: idea-source.md`);
             
         } catch (error) {
@@ -450,7 +493,10 @@ class CDPTaskAutomationWorkflow {
         try {
             // Import ProjectDetector dynamically to avoid circular imports
             const { ProjectDetector } = await import('./automation/core/project-detector.js');
-            const projectDetector = new ProjectDetector();
+            const projectDetector = new ProjectDetector(this.config);
+            
+            // Initialize with workspace detection
+            await projectDetector.initialize();
             
             // Generate project name if not provided
             if (!projectName) {
@@ -480,8 +526,16 @@ class CDPTaskAutomationWorkflow {
             // Execute planning workflow
             await planningWorkflow.executePlanningWorkflow(gameIdea, projectName);
             
+            // Get workspace info for user feedback
+            const workspaceInfo = projectDetector.getWorkspaceInfo();
+            
             console.log(`✅ Game project "${projectName}" created successfully!`);
             console.log(`📁 Project location: ${projectPath}`);
+            if (workspaceInfo.isInWorkspace) {
+                console.log(`🎯 Created in Cursor workspace: ${workspaceInfo.workspacePath}`);
+            } else {
+                console.log(`⚠️ Created in local directory (Cursor workspace not found)`);
+            }
             
         } catch (error) {
             this.log(`❌ Error creating project: ${error.message}`, 'ERROR');
@@ -611,6 +665,152 @@ class CDPTaskAutomationWorkflow {
         console.log('✅ Paths configured successfully!');
     }
 
+    // NEW: Git Operations Integration
+    async checkGitStatus() {
+        this.log('🔍 Checking Git status...');
+        
+        try {
+            // Import GitStatusChecker dynamically
+            const GitStatusChecker = (await import('./automation/git-operations/git-status.js')).default;
+            const gitChecker = new GitStatusChecker(this.config.projectRoot);
+            
+            const gitInfo = await gitChecker.getFullInfo();
+            
+            if (gitInfo.isGitRepo) {
+                this.log(`✅ Git repository found in: ${gitInfo.workspacePath}`);
+                this.log(`📋 Current branch: ${gitInfo.branch.branch}`);
+                this.log(`📊 Status: ${gitInfo.status.status.total} changes`);
+                
+                if (gitInfo.status.status.total > 0) {
+                    this.log(`⚠️ Repository has uncommitted changes`);
+                    this.log(`   Modified: ${gitInfo.status.status.modified}`);
+                    this.log(`   Added: ${gitInfo.status.status.added}`);
+                    this.log(`   Deleted: ${gitInfo.status.status.deleted}`);
+                    this.log(`   Untracked: ${gitInfo.status.status.untracked}`);
+                } else {
+                    this.log(`✅ Repository is clean`);
+                }
+                
+                return gitInfo;
+            } else {
+                this.log(`❌ No Git repository found in: ${gitInfo.workspacePath}`);
+                return gitInfo;
+            }
+        } catch (error) {
+            this.log(`❌ Error checking Git status: ${error.message}`, 'ERROR');
+            return { error: error.message };
+        }
+    }
+
+    async getGitBranches() {
+        this.log('🌿 Getting Git branches...');
+        
+        try {
+            // Import GitBranchManager dynamically
+            const GitBranchManager = (await import('./automation/git-operations/git-branches.js')).default;
+            const branchManager = new GitBranchManager(this.config.projectRoot);
+            
+            const branches = await branchManager.getAllBranches();
+            
+            if (branches.error) {
+                this.log(`❌ Error getting branches: ${branches.error}`, 'ERROR');
+                return branches;
+            }
+            
+            this.log(`✅ Found ${branches.local.length} local and ${branches.remote.length} remote branches`);
+            this.log(`📋 Current branch: ${branches.current}`);
+            
+            return branches;
+        } catch (error) {
+            this.log(`❌ Error getting Git branches: ${error.message}`, 'ERROR');
+            return { error: error.message };
+        }
+    }
+
+    async createGitBranch(branchName) {
+        this.log(`🌿 Creating Git branch: ${branchName}`);
+        
+        try {
+            // Import GitBranchManager dynamically
+            const GitBranchManager = (await import('./automation/git-operations/git-branches.js')).default;
+            const branchManager = new GitBranchManager(this.config.projectRoot);
+            
+            const result = await branchManager.createBranch(branchName);
+            
+            if (result.success) {
+                this.log(`✅ ${result.message}`);
+            } else {
+                this.log(`❌ Error creating branch: ${result.error}`, 'ERROR');
+            }
+            
+            return result;
+        } catch (error) {
+            this.log(`❌ Error creating Git branch: ${error.message}`, 'ERROR');
+            return { error: error.message };
+        }
+    }
+
+    async switchGitBranch(branchName) {
+        this.log(`🌿 Switching to Git branch: ${branchName}`);
+        
+        try {
+            // Import GitBranchManager dynamically
+            const GitBranchManager = (await import('./automation/git-operations/git-branches.js')).default;
+            const branchManager = new GitBranchManager(this.config.projectRoot);
+            
+            const result = await branchManager.switchBranch(branchName);
+            
+            if (result.success) {
+                this.log(`✅ ${result.message}`);
+            } else {
+                this.log(`❌ Error switching branch: ${result.error}`, 'ERROR');
+            }
+            
+            return result;
+        } catch (error) {
+            this.log(`❌ Error switching Git branch: ${error.message}`, 'ERROR');
+            return { error: error.message };
+        }
+    }
+
+    async commitAndPush(message, files = []) {
+        this.log(`💾 Committing and pushing changes...`);
+        
+        try {
+            // Import GitOperationsManager dynamically
+            const GitOperationsManager = (await import('./automation/git-operations/run.js')).default;
+            const gitManager = new GitOperationsManager(this.config, this.log);
+            await gitManager.initialize();
+            
+            // Add files
+            const addResult = await gitManager.addFiles(files);
+            if (addResult.error) {
+                this.log(`❌ Error adding files: ${addResult.error}`, 'ERROR');
+                return addResult;
+            }
+            
+            // Commit
+            const commitResult = await gitManager.commit(message);
+            if (commitResult.error) {
+                this.log(`❌ Error committing: ${commitResult.error}`, 'ERROR');
+                return commitResult;
+            }
+            
+            // Push
+            const pushResult = await gitManager.push();
+            if (pushResult.error) {
+                this.log(`❌ Error pushing: ${pushResult.error}`, 'ERROR');
+                return pushResult;
+            }
+            
+            this.log(`✅ Successfully committed and pushed changes`);
+            return { success: true, message: 'Changes committed and pushed successfully' };
+        } catch (error) {
+            this.log(`❌ Error in commit and push: ${error.message}`, 'ERROR');
+            return { error: error.message };
+        }
+    }
+
     // OLD: Original methods (keep existing functionality)
     parseArguments() {
         // This is now handled by ShellInterface
@@ -619,8 +819,14 @@ class CDPTaskAutomationWorkflow {
 
     async loadTaskDefinitions() {
         try {
+            // Use the updated config paths that may point to workspace
             this.taskQueue = loadTaskDefinitions(this.config.orchestratorFile);
             this.log(`📊 Parsed ${this.taskQueue.length} tasks from orchestrator`);
+            
+            // Log where the orchestrator was loaded from
+            if (this.config.orchestratorFile) {
+                this.log(`📁 Loaded from: ${this.config.orchestratorFile}`);
+            }
         } catch (error) {
             this.log(`❌ Error loading task definitions: ${error.message}`, 'ERROR');
             throw error;
@@ -650,6 +856,18 @@ class CDPTaskAutomationWorkflow {
     async executeSpecificTask(taskId) {
         this.log(`🎯 Executing specific task: ${taskId}`);
         
+        // Initialize with workspace detection if not already done
+        const { ProjectDetector } = await import('./automation/core/project-detector.js');
+        const projectDetector = new ProjectDetector(this.config);
+        await projectDetector.initialize();
+        
+        const workspaceInfo = projectDetector.getWorkspaceInfo();
+        if (workspaceInfo.isInWorkspace) {
+            this.log(`🎯 Using Cursor workspace: ${workspaceInfo.workspacePath}`);
+        } else {
+            this.log(`⚠️ Using local directory (Cursor workspace not found)`);
+        }
+        
         const task = this.taskQueue.find(t => t.id === taskId);
         if (!task) {
             this.log(`❌ Task ${taskId} not found`, 'ERROR');
@@ -665,6 +883,18 @@ class CDPTaskAutomationWorkflow {
         this.log('📋 Listing tasks');
         
         if (this.taskQueue.length === 0) {
+            // Initialize with workspace detection if not already done
+            const { ProjectDetector } = await import('./automation/core/project-detector.js');
+            const projectDetector = new ProjectDetector(this.config);
+            await projectDetector.initialize();
+            
+            const workspaceInfo = projectDetector.getWorkspaceInfo();
+            if (workspaceInfo.isInWorkspace) {
+                this.log(`🎯 Using Cursor workspace: ${workspaceInfo.workspacePath}`);
+            } else {
+                this.log(`⚠️ Using local directory (Cursor workspace not found)`);
+            }
+            
             await this.loadTaskDefinitions();
         }
         
@@ -676,6 +906,71 @@ class CDPTaskAutomationWorkflow {
             const progress = task.progress || '0%';
             console.log(`${task.id.toString().padStart(2)}. ${task.name.padEnd(40)} ${status} (${progress})`);
         }
+    }
+
+    // NEW: Execute workflow
+    async executeWorkflow() {
+        this.log('🚀 Starting workflow execution');
+        
+        // Initialize with workspace detection if not already done
+        const { ProjectDetector } = await import('./automation/core/project-detector.js');
+        const projectDetector = new ProjectDetector(this.config);
+        await projectDetector.initialize();
+        
+        const workspaceInfo = projectDetector.getWorkspaceInfo();
+        if (workspaceInfo.isInWorkspace) {
+            this.log(`🎯 Using Cursor workspace: ${workspaceInfo.workspacePath}`);
+        } else {
+            this.log(`⚠️ Using local directory (Cursor workspace not found)`);
+        }
+        
+        // Load tasks if not already loaded
+        if (this.taskQueue.length === 0) {
+            await this.loadTaskDefinitions();
+            this.buildDependencyGraph();
+        }
+        
+        // Initialize browser if not already done
+        if (!this.browser) {
+            await this.initializeBrowser();
+        }
+        
+        // Execute all tasks
+        for (const task of this.taskQueue) {
+            try {
+                this.log(`🎯 Executing task: ${task.name}`);
+                await this.executeTaskWithCDP(task);
+                this.completedTasks.push(task);
+            } catch (error) {
+                this.log(`❌ Error executing task ${task.name}: ${error.message}`, 'ERROR');
+                this.failedTasks.push(task);
+            }
+        }
+        
+        this.log(`✅ Workflow completed. ${this.completedTasks.length} successful, ${this.failedTasks.length} failed`);
+    }
+
+    // NEW: Set start from task ID
+    setStartFromTaskId(taskId) {
+        this.log(`🎯 Setting start point to task: ${taskId}`);
+        
+        const startIndex = this.taskQueue.findIndex(t => t.id === taskId);
+        if (startIndex === -1) {
+            this.log(`❌ Task ${taskId} not found`, 'ERROR');
+            return;
+        }
+        
+        // Filter tasks to start from the specified task
+        this.taskQueue = this.taskQueue.slice(startIndex);
+        this.log(`✅ Will start execution from task ${taskId}: ${this.taskQueue[0].name}`);
+    }
+
+    // NEW: Execute task with CDP (placeholder - to be implemented)
+    async executeTaskWithCDP(task) {
+        this.log(`🔧 Executing task with CDP: ${task.name}`);
+        // TODO: Implement actual CDP task execution
+        await this.delay(1000); // Simulate task execution
+        this.log(`✅ Task completed: ${task.name}`);
     }
 
     delay(ms) {
