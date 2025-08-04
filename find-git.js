@@ -114,36 +114,43 @@ class GitFinder {
         }
 
         try {
-            // Try multiple methods to find workspace path
-            const workspacePath = await this.page.evaluate(() => {
-                // Method 1: VS Code API
-                if (window.vscode && window.vscode.workspace) {
-                    return window.vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
-                }
-
-                // Method 2: DOM elements
-                const workspaceElements = document.querySelectorAll('[data-workspace-path], [data-path]');
-                for (const element of workspaceElements) {
-                    const path = element.getAttribute('data-workspace-path') || element.getAttribute('data-path');
-                    if (path && path.includes('/') && !path.includes('http')) {
-                        return path;
-                    }
-                }
-
-                // Method 3: Title bar
-                const titleBar = document.querySelector('.titlebar, .window-title');
-                if (titleBar) {
-                    const title = titleBar.textContent;
-                    const match = title.match(/([^-]+)\s*-\s*Cursor/);
-                    if (match) {
-                        return match[1].trim();
-                    }
-                }
-
-                return null;
+            console.log('🔍 Extracting workspace from page title...');
+            
+            const pageTitle = await this.page.evaluate(() => {
+                return document.title;
             });
-
-            return workspacePath;
+            
+            console.log(`📄 Page title: ${pageTitle}`);
+            
+            // Extract workspace name from title (format: "filename - workspace - Cursor")
+            const titleMatch = pageTitle.match(/([^-]+)\s*-\s*Cursor/);
+            if (titleMatch) {
+                const workspaceName = titleMatch[1].trim();
+                console.log(`🎯 Extracted workspace name: ${workspaceName}`);
+                
+                // Search for this workspace starting from current directory and going up
+                let currentDir = process.cwd();
+                const maxDepth = 10;
+                let depth = 0;
+                
+                while (currentDir !== '/' && depth < maxDepth) {
+                    const workspacePath = path.join(currentDir, workspaceName);
+                    if (fs.existsSync(workspacePath)) {
+                        console.log(`✅ Found workspace: ${workspacePath}`);
+                        return workspacePath;
+                    }
+                    
+                    // Move up one directory
+                    currentDir = path.dirname(currentDir);
+                    depth++;
+                }
+                
+                console.log(`❌ Could not find workspace: ${workspaceName}`);
+                return null;
+            }
+            
+            console.log('❌ Could not extract workspace name from title');
+            return null;
         } catch (error) {
             console.error(`❌ Error finding workspace path: ${error.message}`);
             return null;
@@ -241,6 +248,15 @@ class GitFinder {
 
     async getFullGitInfo() {
         const workspacePath = await this.findWorkspacePath();
+        
+        if (!workspacePath) {
+            console.log('❌ No workspace found, cannot get Git information');
+            return {
+                workspacePath: null,
+                localGitInfo: { isGitRepo: false, error: 'No workspace found' }
+            };
+        }
+        
         const cdpGitInfo = await this.findGitInfo();
         const localGitInfo = await this.getGitRepositoryInfo(workspacePath);
 
@@ -278,40 +294,47 @@ async function main() {
 
         const gitInfo = await finder.getFullGitInfo();
         
-        console.log('\n📊 Git Repository Information:');
-        console.log('============================');
-        console.log(`Workspace Path: ${gitInfo.workspacePath || 'Not found'}`);
-        
-        if (gitInfo.localGitInfo && gitInfo.localGitInfo.isGitRepo) {
-            console.log('\n✅ Git Repository Found!');
-            console.log(`Git Root: ${gitInfo.localGitInfo.gitRoot}`);
-            console.log(`Current Branch: ${gitInfo.localGitInfo.currentBranch || 'Unknown'}`);
+        if (gitInfo.workspacePath) {
+            console.log('\n📊 Git Repository Information:');
+            console.log('============================');
+            console.log(`Workspace Path: ${gitInfo.workspacePath}`);
             
-            if (gitInfo.localGitInfo.remotes) {
-                console.log('\n🌐 Remotes:');
-                Object.entries(gitInfo.localGitInfo.remotes).forEach(([name, url]) => {
-                    console.log(`  ${name}: ${url}`);
-                });
-            }
-            
-            if (gitInfo.localGitInfo.status) {
-                console.log('\n📈 Status:');
-                console.log(`  Modified: ${gitInfo.localGitInfo.status.modified}`);
-                console.log(`  Added: ${gitInfo.localGitInfo.status.added}`);
-                console.log(`  Deleted: ${gitInfo.localGitInfo.status.deleted}`);
-                console.log(`  Untracked: ${gitInfo.localGitInfo.status.untracked}`);
-            }
-            
-            if (gitInfo.localGitInfo.lastCommit) {
-                console.log(`\n📝 Last Commit: ${gitInfo.localGitInfo.lastCommit}`);
-            }
-            
-            if (gitInfo.cdpGitInfo) {
-                console.log('\n🔍 CDP Git Info:');
-                console.log(JSON.stringify(gitInfo.cdpGitInfo, null, 2));
+            if (gitInfo.localGitInfo && gitInfo.localGitInfo.isGitRepo) {
+                console.log('\n✅ Git Repository Found!');
+                console.log(`Git Root: ${gitInfo.localGitInfo.gitRoot}`);
+                console.log(`Current Branch: ${gitInfo.localGitInfo.currentBranch || 'Unknown'}`);
+                
+                if (gitInfo.localGitInfo.remotes) {
+                    console.log('\n🌐 Remotes:');
+                    Object.entries(gitInfo.localGitInfo.remotes).forEach(([name, url]) => {
+                        console.log(`  ${name}: ${url}`);
+                    });
+                }
+                
+                if (gitInfo.localGitInfo.status) {
+                    console.log('\n📈 Status:');
+                    console.log(`  Modified: ${gitInfo.localGitInfo.status.modified}`);
+                    console.log(`  Added: ${gitInfo.localGitInfo.status.added}`);
+                    console.log(`  Deleted: ${gitInfo.localGitInfo.status.deleted}`);
+                    console.log(`  Untracked: ${gitInfo.localGitInfo.status.untracked}`);
+                }
+                
+                if (gitInfo.localGitInfo.lastCommit) {
+                    console.log(`\n📝 Last Commit: ${gitInfo.localGitInfo.lastCommit}`);
+                }
+                
+                if (gitInfo.cdpGitInfo) {
+                    console.log('\n🔍 CDP Git Info:');
+                    console.log(JSON.stringify(gitInfo.cdpGitInfo, null, 2));
+                }
+            } else {
+                console.log('\n❌ No Git repository found in workspace');
+                if (gitInfo.localGitInfo && gitInfo.localGitInfo.error) {
+                    console.log(`Error: ${gitInfo.localGitInfo.error}`);
+                }
             }
         } else {
-            console.log('\n❌ No Git repository found in workspace');
+            console.log('\n❌ No workspace found');
         }
 
     } catch (error) {
