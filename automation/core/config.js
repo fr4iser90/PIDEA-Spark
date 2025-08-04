@@ -28,12 +28,12 @@ export const CONFIG = {
     // File Paths
     paths: {
         projectRoot: process.cwd(),
-        tasksDir: 'docs/09_roadmap/tasks',
+        tasksDir: 'pidea-spark-output/tasks',
         orchestratorFile: 'pidea-spark-output/tasks/system/orchestrator.md',
         progressFile: 'pidea-spark-output/tasks/system/progress-tracker.md',
         logFile: 'automation-workflow-cdp.log',
-        templateDir: 'docs/template/games/template',
-        gamesDir: 'docs/games'
+        templateDir: 'pidea-spark-output/template/games/template',
+        gamesDir: 'pidea-spark-output/games'
     },
     
     // AI Settings

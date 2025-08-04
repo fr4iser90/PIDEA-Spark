@@ -9,160 +9,160 @@
 
 ## Task Status Table
 
-### 1. Project Setup & Architecture (10 Tasks)
+### 1. Project Setup & Architecture ([PROJECT_SETUP_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 1.1 | Git Repository & Branching Strategy | project-setup | 1h | 📋 Ready | 0% | - | Version control setup |
-| 1.2 | Project Structure Creation | project-setup | 1h | 📋 Ready | 0% | 1.1 | Directory organization |
-| 1.3 | Linter & Formatter Configuration | project-setup | 1h | 📋 Ready | 0% | 1.2 | Code quality tools |
-| 1.4 | TypeScript/JS Build Setup | project-setup | 2h | 📋 Ready | 0% | 1.2 | Build system configuration |
-| 1.5 | Package Management Configuration | project-setup | 1h | 📋 Ready | 0% | 1.2 | Dependency management |
-| 1.6 | ESLint + Prettier Setup | project-setup | 1h | 📋 Ready | 0% | 1.3 | Code formatting |
-| 1.7 | Basis Logging System | project-setup | 1h | 📋 Ready | 0% | 1.2 | Logging infrastructure |
-| 1.8 | Config System Implementation | project-setup | 2h | 📋 Ready | 0% | 1.2 | Configuration management |
-| 1.9 | Basis Documentation | project-setup | 2h | 📋 Ready | 0% | 1.2 | Project documentation |
-| 1.10 | CI/CD Skeleton | project-setup | 2h | 📋 Ready | 0% | 1.2 | Continuous integration |
+| 1.1 | [VERSION_CONTROL_TASK] | project-setup | [VERSION_CONTROL_TIME] | 📋 Ready | 0% | - | [VERSION_CONTROL_DESCRIPTION] |
+| 1.2 | [PROJECT_STRUCTURE_TASK] | project-setup | [PROJECT_STRUCTURE_TIME] | 📋 Ready | 0% | 1.1 | [PROJECT_STRUCTURE_DESCRIPTION] |
+| 1.3 | [CODE_QUALITY_TASK] | project-setup | [CODE_QUALITY_TIME] | 📋 Ready | 0% | 1.2 | [CODE_QUALITY_DESCRIPTION] |
+| 1.4 | [BUILD_SYSTEM_TASK] | project-setup | [BUILD_SYSTEM_TIME] | 📋 Ready | 0% | 1.2 | [BUILD_SYSTEM_DESCRIPTION] |
+| 1.5 | [DEPENDENCY_MANAGEMENT_TASK] | project-setup | [DEPENDENCY_MANAGEMENT_TIME] | 📋 Ready | 0% | 1.2 | [DEPENDENCY_MANAGEMENT_DESCRIPTION] |
+| 1.6 | [CODE_FORMATTING_TASK] | project-setup | [CODE_FORMATTING_TIME] | 📋 Ready | 0% | 1.3 | [CODE_FORMATTING_DESCRIPTION] |
+| 1.7 | [LOGGING_SYSTEM_TASK] | project-setup | [LOGGING_SYSTEM_TIME] | 📋 Ready | 0% | 1.2 | [LOGGING_SYSTEM_DESCRIPTION] |
+| 1.8 | [CONFIG_SYSTEM_TASK] | project-setup | [CONFIG_SYSTEM_TIME] | 📋 Ready | 0% | 1.2 | [CONFIG_SYSTEM_DESCRIPTION] |
+| 1.9 | [DOCUMENTATION_TASK] | project-setup | [DOCUMENTATION_TIME] | 📋 Ready | 0% | 1.2 | [DOCUMENTATION_DESCRIPTION] |
+| 1.10 | [CI_CD_TASK] | project-setup | [CI_CD_TIME] | 📋 Ready | 0% | 1.2 | [CI_CD_DESCRIPTION] |
 
-### 2. Core Engine / Backend (15 Tasks)
+### 2. Core Engine / Backend ([CORE_ENGINE_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 2.1 | Game Loop Basis | core-engine | 3h | 📋 Ready | 0% | 1.4 | Main game loop |
-| 2.2 | Entity Component System | core-engine | 4h | 📋 Ready | 0% | 2.1 | ECS architecture |
-| 2.3 | Physics Engine Integration | core-engine | 3h | 📋 Ready | 0% | 2.1 | Physics simulation |
-| 2.4 | Input Handling | core-engine | 2h | 📋 Ready | 0% | 2.1 | Input management |
-| 2.5 | Rendering Pipeline Setup | core-engine | 4h | 📋 Ready | 0% | 2.1 | Graphics pipeline |
-| 2.6 | Audio Engine Integration | core-engine | 3h | 📋 Ready | 0% | 2.1 | Audio system |
-| 2.7 | AI Pathfinding Basis | core-engine | 3h | 📋 Ready | 0% | 2.2 | Pathfinding algorithms |
-| 2.8 | AI Behavior Trees | core-engine | 4h | 📋 Ready | 0% | 2.7 | AI decision making |
-| 2.9 | Event System | core-engine | 2h | 📋 Ready | 0% | 2.2 | Event management |
-| 2.10 | Resource Management | core-engine | 3h | 📋 Ready | 0% | 2.1 | Asset management |
-| 2.11 | Serialization / Savegames | core-engine | 3h | 📋 Ready | 0% | 2.2 | Data persistence |
-| 2.12 | Plugin System | core-engine | 4h | 📋 Ready | 0% | 2.9 | Extensibility |
-| 2.13 | Mod Support Grundstruktur | core-engine | 3h | 📋 Ready | 0% | 2.12 | Modding support |
-| 2.14 | Performance Benchmarking | core-engine | 2h | 📋 Ready | 0% | 2.1 | Performance monitoring |
-| 2.15 | Engine Documentation | core-engine | 3h | 📋 Ready | 0% | 2.1-2.14 | Technical documentation |
+| 2.1 | [GAME_LOOP_TASK] | core-engine | [GAME_LOOP_TIME] | 📋 Ready | 0% | 1.4 | [GAME_LOOP_DESCRIPTION] |
+| 2.2 | [ECS_TASK] | core-engine | [ECS_TIME] | 📋 Ready | 0% | 2.1 | [ECS_DESCRIPTION] |
+| 2.3 | [PHYSICS_TASK] | core-engine | [PHYSICS_TIME] | 📋 Ready | 0% | 2.1 | [PHYSICS_DESCRIPTION] |
+| 2.4 | [INPUT_TASK] | core-engine | [INPUT_TIME] | 📋 Ready | 0% | 2.1 | [INPUT_DESCRIPTION] |
+| 2.5 | [RENDERING_TASK] | core-engine | [RENDERING_TIME] | 📋 Ready | 0% | 2.1 | [RENDERING_DESCRIPTION] |
+| 2.6 | [AUDIO_TASK] | core-engine | [AUDIO_TIME] | 📋 Ready | 0% | 2.1 | [AUDIO_DESCRIPTION] |
+| 2.7 | [AI_PATHFINDING_TASK] | core-engine | [AI_PATHFINDING_TIME] | 📋 Ready | 0% | 2.2 | [AI_PATHFINDING_DESCRIPTION] |
+| 2.8 | [AI_BEHAVIOR_TASK] | core-engine | [AI_BEHAVIOR_TIME] | 📋 Ready | 0% | 2.7 | [AI_BEHAVIOR_DESCRIPTION] |
+| 2.9 | [EVENT_SYSTEM_TASK] | core-engine | [EVENT_SYSTEM_TIME] | 📋 Ready | 0% | 2.2 | [EVENT_SYSTEM_DESCRIPTION] |
+| 2.10 | [RESOURCE_MANAGEMENT_TASK] | core-engine | [RESOURCE_MANAGEMENT_TIME] | 📋 Ready | 0% | 2.1 | [RESOURCE_MANAGEMENT_DESCRIPTION] |
+| 2.11 | [SERIALIZATION_TASK] | core-engine | [SERIALIZATION_TIME] | 📋 Ready | 0% | 2.2 | [SERIALIZATION_DESCRIPTION] |
+| 2.12 | [PLUGIN_SYSTEM_TASK] | core-engine | [PLUGIN_SYSTEM_TIME] | 📋 Ready | 0% | 2.9 | [PLUGIN_SYSTEM_DESCRIPTION] |
+| 2.13 | [MOD_SUPPORT_TASK] | core-engine | [MOD_SUPPORT_TIME] | 📋 Ready | 0% | 2.12 | [MOD_SUPPORT_DESCRIPTION] |
+| 2.14 | [PERFORMANCE_TASK] | core-engine | [PERFORMANCE_TIME] | 📋 Ready | 0% | 2.1 | [PERFORMANCE_DESCRIPTION] |
+| 2.15 | [ENGINE_DOCS_TASK] | core-engine | [ENGINE_DOCS_TIME] | 📋 Ready | 0% | 2.1-2.14 | [ENGINE_DOCS_DESCRIPTION] |
 
-### 3. Frontend & UI (10 Tasks)
+### 3. Frontend & UI ([FRONTEND_UI_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 3.1 | UI Framework Setup | frontend-ui | 2h | 📋 Ready | 0% | 2.5 | UI framework initialization |
-| 3.2 | Hauptmenu Implementation | frontend-ui | 3h | 📋 Ready | 0% | 3.1 | Main menu system |
-| 3.3 | HUD Implementation | frontend-ui | 3h | 📋 Ready | 0% | 3.1 | Heads-up display |
-| 3.4 | Optionsmenu (Audio, Video, Steuerung) | frontend-ui | 4h | 📋 Ready | 0% | 3.1 | Settings interface |
-| 3.5 | Inventar / UI Komponenten | frontend-ui | 3h | 📋 Ready | 0% | 3.1 | Inventory interface |
-| 3.6 | Responsive Design | frontend-ui | 3h | 📋 Ready | 0% | 3.1 | Multi-platform UI |
-| 3.7 | Animationen UI | frontend-ui | 3h | 📋 Ready | 0% | 3.1 | UI animations |
-| 3.8 | Localization Support UI | frontend-ui | 2h | 📋 Ready | 0% | 3.1 | Multi-language support |
-| 3.9 | Accessibility Features | frontend-ui | 3h | 📋 Ready | 0% | 3.1 | Accessibility compliance |
-| 3.10 | UI Tests | frontend-ui | 2h | 📋 Ready | 0% | 3.1-3.9 | UI testing |
+| 3.1 | [UI_FRAMEWORK_TASK] | frontend-ui | [UI_FRAMEWORK_TIME] | 📋 Ready | 0% | 2.5 | [UI_FRAMEWORK_DESCRIPTION] |
+| 3.2 | [MAIN_MENU_TASK] | frontend-ui | [MAIN_MENU_TIME] | 📋 Ready | 0% | 3.1 | [MAIN_MENU_DESCRIPTION] |
+| 3.3 | [HUD_TASK] | frontend-ui | [HUD_TIME] | 📋 Ready | 0% | 3.1 | [HUD_DESCRIPTION] |
+| 3.4 | [SETTINGS_MENU_TASK] | frontend-ui | [SETTINGS_MENU_TIME] | 📋 Ready | 0% | 3.1 | [SETTINGS_MENU_DESCRIPTION] |
+| 3.5 | [INVENTORY_UI_TASK] | frontend-ui | [INVENTORY_UI_TIME] | 📋 Ready | 0% | 3.1 | [INVENTORY_UI_DESCRIPTION] |
+| 3.6 | [RESPONSIVE_DESIGN_TASK] | frontend-ui | [RESPONSIVE_DESIGN_TIME] | 📋 Ready | 0% | 3.1 | [RESPONSIVE_DESIGN_DESCRIPTION] |
+| 3.7 | [UI_ANIMATIONS_TASK] | frontend-ui | [UI_ANIMATIONS_TIME] | 📋 Ready | 0% | 3.1 | [UI_ANIMATIONS_DESCRIPTION] |
+| 3.8 | [LOCALIZATION_UI_TASK] | frontend-ui | [LOCALIZATION_UI_TIME] | 📋 Ready | 0% | 3.1 | [LOCALIZATION_UI_DESCRIPTION] |
+| 3.9 | [ACCESSIBILITY_TASK] | frontend-ui | [ACCESSIBILITY_TIME] | 📋 Ready | 0% | 3.1 | [ACCESSIBILITY_DESCRIPTION] |
+| 3.10 | [UI_TESTING_TASK] | frontend-ui | [UI_TESTING_TIME] | 📋 Ready | 0% | 3.1-3.9 | [UI_TESTING_DESCRIPTION] |
 
-### 4. Assets & Art Pipeline (10 Tasks)
+### 4. Assets & Art Pipeline ([ASSETS_PIPELINE_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 4.1 | Asset Pipeline Setup | assets-pipeline | 3h | 📋 Ready | 0% | 2.10 | Asset processing pipeline |
-| 4.2 | Asset Loader | assets-pipeline | 2h | 📋 Ready | 0% | 4.1 | Asset loading system |
-| 4.3 | Texture Kompression & Optimierung | assets-pipeline | 3h | 📋 Ready | 0% | 4.1 | Texture optimization |
-| 4.4 | Spritesheet Integration | assets-pipeline | 2h | 📋 Ready | 0% | 4.2 | Sprite management |
-| 4.5 | 3D Modell Importer | assets-pipeline | 3h | 📋 Ready | 0% | 4.2 | 3D model support |
-| 4.6 | Sound Assets Handling | assets-pipeline | 2h | 📋 Ready | 0% | 2.6 | Audio asset management |
-| 4.7 | Musik Looping & Cues | assets-pipeline | 3h | 📋 Ready | 0% | 4.6 | Music system |
-| 4.8 | Asset Cache | assets-pipeline | 2h | 📋 Ready | 0% | 4.2 | Asset caching |
-| 4.9 | Asset Versionierung | assets-pipeline | 2h | 📋 Ready | 0% | 4.1 | Asset versioning |
-| 4.10 | Asset Tests | assets-pipeline | 2h | 📋 Ready | 0% | 4.1-4.9 | Asset validation |
+| 4.1 | [ASSET_PIPELINE_TASK] | assets-pipeline | [ASSET_PIPELINE_TIME] | 📋 Ready | 0% | 2.10 | [ASSET_PIPELINE_DESCRIPTION] |
+| 4.2 | [ASSET_LOADER_TASK] | assets-pipeline | [ASSET_LOADER_TIME] | 📋 Ready | 0% | 4.1 | [ASSET_LOADER_DESCRIPTION] |
+| 4.3 | [TEXTURE_OPTIMIZATION_TASK] | assets-pipeline | [TEXTURE_OPTIMIZATION_TIME] | 📋 Ready | 0% | 4.1 | [TEXTURE_OPTIMIZATION_DESCRIPTION] |
+| 4.4 | [SPRITESHEET_TASK] | assets-pipeline | [SPRITESHEET_TIME] | 📋 Ready | 0% | 4.2 | [SPRITESHEET_DESCRIPTION] |
+| 4.5 | [MODEL_IMPORTER_TASK] | assets-pipeline | [MODEL_IMPORTER_TIME] | 📋 Ready | 0% | 4.2 | [MODEL_IMPORTER_DESCRIPTION] |
+| 4.6 | [AUDIO_ASSETS_TASK] | assets-pipeline | [AUDIO_ASSETS_TIME] | 📋 Ready | 0% | 2.6 | [AUDIO_ASSETS_DESCRIPTION] |
+| 4.7 | [MUSIC_SYSTEM_TASK] | assets-pipeline | [MUSIC_SYSTEM_TIME] | 📋 Ready | 0% | 4.6 | [MUSIC_SYSTEM_DESCRIPTION] |
+| 4.8 | [ASSET_CACHE_TASK] | assets-pipeline | [ASSET_CACHE_TIME] | 📋 Ready | 0% | 4.2 | [ASSET_CACHE_DESCRIPTION] |
+| 4.9 | [ASSET_VERSIONING_TASK] | assets-pipeline | [ASSET_VERSIONING_TIME] | 📋 Ready | 0% | 4.1 | [ASSET_VERSIONING_DESCRIPTION] |
+| 4.10 | [ASSET_TESTING_TASK] | assets-pipeline | [ASSET_TESTING_TIME] | 📋 Ready | 0% | 4.1-4.9 | [ASSET_TESTING_DESCRIPTION] |
 
-### 5. Data & Persistence (5 Tasks)
+### 5. Data & Persistence ([DATA_PERSISTENCE_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 5.1 | Save/Load System | data-persistence | 3h | 📋 Ready | 0% | 2.11 | Save game functionality |
-| 5.2 | Cloud Save Integration | data-persistence | 4h | 📋 Ready | 0% | 5.1 | Cloud storage |
-| 5.3 | Datenbank Anbindung | data-persistence | 3h | 📋 Ready | 0% | 5.1 | Database integration |
-| 5.4 | Data Migration | data-persistence | 2h | 📋 Ready | 0% | 5.3 | Data migration tools |
-| 5.5 | Encryption/Integrity Check | data-persistence | 3h | 📋 Ready | 0% | 5.1 | Data security |
+| 5.1 | [SAVE_LOAD_TASK] | data-persistence | [SAVE_LOAD_TIME] | 📋 Ready | 0% | 2.11 | [SAVE_LOAD_DESCRIPTION] |
+| 5.2 | [CLOUD_SAVE_TASK] | data-persistence | [CLOUD_SAVE_TIME] | 📋 Ready | 0% | 5.1 | [CLOUD_SAVE_DESCRIPTION] |
+| 5.3 | [DATABASE_TASK] | data-persistence | [DATABASE_TIME] | 📋 Ready | 0% | 5.1 | [DATABASE_DESCRIPTION] |
+| 5.4 | [DATA_MIGRATION_TASK] | data-persistence | [DATA_MIGRATION_TIME] | 📋 Ready | 0% | 5.3 | [DATA_MIGRATION_DESCRIPTION] |
+| 5.5 | [DATA_SECURITY_TASK] | data-persistence | [DATA_SECURITY_TIME] | 📋 Ready | 0% | 5.1 | [DATA_SECURITY_DESCRIPTION] |
 
-### 6. Multiplayer & Networking (10 Tasks)
+### 6. Multiplayer & Networking ([MULTIPLAYER_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 6.1 | Networking Stack Auswahl | multiplayer | 2h | 📋 Ready | 0% | 2.9 | Network technology choice |
-| 6.2 | Client-Server Architektur | multiplayer | 4h | 📋 Ready | 0% | 6.1 | Network architecture |
-| 6.3 | Matchmaking Basis | multiplayer | 3h | 📋 Ready | 0% | 6.2 | Player matching |
-| 6.4 | Lobby System | multiplayer | 3h | 📋 Ready | 0% | 6.3 | Game lobbies |
-| 6.5 | Realtime Sync | multiplayer | 4h | 📋 Ready | 0% | 6.2 | Real-time synchronization |
-| 6.6 | Lag Compensation | multiplayer | 3h | 📋 Ready | 0% | 6.5 | Network latency handling |
-| 6.7 | Security Anti-Cheat | multiplayer | 4h | 📋 Ready | 0% | 6.2 | Anti-cheat measures |
-| 6.8 | Network Compression | multiplayer | 2h | 📋 Ready | 0% | 6.5 | Data compression |
-| 6.9 | Multiplayer Testing | multiplayer | 3h | 📋 Ready | 0% | 6.1-6.8 | Network testing |
-| 6.10 | Netzwerk-Monitoring | multiplayer | 2h | 📋 Ready | 0% | 6.2 | Network monitoring |
+| 6.1 | [NETWORKING_STACK_TASK] | multiplayer | [NETWORKING_STACK_TIME] | 📋 Ready | 0% | 2.9 | [NETWORKING_STACK_DESCRIPTION] |
+| 6.2 | [CLIENT_SERVER_TASK] | multiplayer | [CLIENT_SERVER_TIME] | 📋 Ready | 0% | 6.1 | [CLIENT_SERVER_DESCRIPTION] |
+| 6.3 | [MATCHMAKING_TASK] | multiplayer | [MATCHMAKING_TIME] | 📋 Ready | 0% | 6.2 | [MATCHMAKING_DESCRIPTION] |
+| 6.4 | [LOBBY_SYSTEM_TASK] | multiplayer | [LOBBY_SYSTEM_TIME] | 📋 Ready | 0% | 6.3 | [LOBBY_SYSTEM_DESCRIPTION] |
+| 6.5 | [REALTIME_SYNC_TASK] | multiplayer | [REALTIME_SYNC_TIME] | 📋 Ready | 0% | 6.2 | [REALTIME_SYNC_DESCRIPTION] |
+| 6.6 | [LAG_COMPENSATION_TASK] | multiplayer | [LAG_COMPENSATION_TIME] | 📋 Ready | 0% | 6.5 | [LAG_COMPENSATION_DESCRIPTION] |
+| 6.7 | [ANTI_CHEAT_TASK] | multiplayer | [ANTI_CHEAT_TIME] | 📋 Ready | 0% | 6.2 | [ANTI_CHEAT_DESCRIPTION] |
+| 6.8 | [NETWORK_COMPRESSION_TASK] | multiplayer | [NETWORK_COMPRESSION_TIME] | 📋 Ready | 0% | 6.5 | [NETWORK_COMPRESSION_DESCRIPTION] |
+| 6.9 | [MULTIPLAYER_TESTING_TASK] | multiplayer | [MULTIPLAYER_TESTING_TIME] | 📋 Ready | 0% | 6.1-6.8 | [MULTIPLAYER_TESTING_DESCRIPTION] |
+| 6.10 | [NETWORK_MONITORING_TASK] | multiplayer | [NETWORK_MONITORING_TIME] | 📋 Ready | 0% | 6.2 | [NETWORK_MONITORING_DESCRIPTION] |
 
-### 7. Feature Development (15 Tasks)
+### 7. Feature Development ([FEATURE_DEV_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 7.1 | Movement Core | feature-dev | 4h | 📋 Ready | 0% | 2.3,2.4 | Character movement |
-| 7.2 | Combat Core | feature-dev | 5h | 📋 Ready | 0% | 7.1 | Combat system |
-| 7.3 | Enemy Spawner | feature-dev | 3h | 📋 Ready | 0% | 7.2 | Enemy generation |
-| 7.4 | Leveling System | feature-dev | 4h | 📋 Ready | 0% | 7.1 | Character progression |
-| 7.5 | Quest System | feature-dev | 5h | 📋 Ready | 0% | 2.8 | Quest management |
-| 7.6 | Crafting System | feature-dev | 4h | 📋 Ready | 0% | 7.1 | Item crafting |
-| 7.7 | Inventory Logic | feature-dev | 3h | 📋 Ready | 0% | 7.6 | Inventory management |
-| 7.8 | NPC Dialog System | feature-dev | 4h | 📋 Ready | 0% | 2.8 | NPC interactions |
-| 7.9 | Boss Mechanics | feature-dev | 5h | 📋 Ready | 0% | 7.2 | Boss battles |
-| 7.10 | Skill Trees | feature-dev | 4h | 📋 Ready | 0% | 7.4 | Skill progression |
-| 7.11 | Special Abilities | feature-dev | 4h | 📋 Ready | 0% | 7.10 | Special powers |
-| 7.12 | Environmental Hazards | feature-dev | 3h | 📋 Ready | 0% | 2.3 | Environmental challenges |
-| 7.13 | Achievement System | feature-dev | 3h | 📋 Ready | 0% | 7.1-7.12 | Achievements |
-| 7.14 | Replay System | feature-dev | 4h | 📋 Ready | 0% | 2.11 | Game replay |
-| 7.15 | Sandbox Features | feature-dev | 5h | 📋 Ready | 0% | 7.1-7.14 | Sandbox mode |
+| 7.1 | [MOVEMENT_TASK] | feature-dev | [MOVEMENT_TIME] | 📋 Ready | 0% | 2.3,2.4 | [MOVEMENT_DESCRIPTION] |
+| 7.2 | [COMBAT_TASK] | feature-dev | [COMBAT_TIME] | 📋 Ready | 0% | 7.1 | [COMBAT_DESCRIPTION] |
+| 7.3 | [ENEMY_SPAWNER_TASK] | feature-dev | [ENEMY_SPAWNER_TIME] | 📋 Ready | 0% | 7.2 | [ENEMY_SPAWNER_DESCRIPTION] |
+| 7.4 | [LEVELING_TASK] | feature-dev | [LEVELING_TIME] | 📋 Ready | 0% | 7.1 | [LEVELING_DESCRIPTION] |
+| 7.5 | [QUEST_TASK] | feature-dev | [QUEST_TIME] | 📋 Ready | 0% | 2.8 | [QUEST_DESCRIPTION] |
+| 7.6 | [CRAFTING_TASK] | feature-dev | [CRAFTING_TIME] | 📋 Ready | 0% | 7.1 | [CRAFTING_DESCRIPTION] |
+| 7.7 | [INVENTORY_LOGIC_TASK] | feature-dev | [INVENTORY_LOGIC_TIME] | 📋 Ready | 0% | 7.6 | [INVENTORY_LOGIC_DESCRIPTION] |
+| 7.8 | [NPC_DIALOG_TASK] | feature-dev | [NPC_DIALOG_TIME] | 📋 Ready | 0% | 2.8 | [NPC_DIALOG_DESCRIPTION] |
+| 7.9 | [BOSS_MECHANICS_TASK] | feature-dev | [BOSS_MECHANICS_TIME] | 📋 Ready | 0% | 7.2 | [BOSS_MECHANICS_DESCRIPTION] |
+| 7.10 | [SKILL_TREES_TASK] | feature-dev | [SKILL_TREES_TIME] | 📋 Ready | 0% | 7.4 | [SKILL_TREES_DESCRIPTION] |
+| 7.11 | [SPECIAL_ABILITIES_TASK] | feature-dev | [SPECIAL_ABILITIES_TIME] | 📋 Ready | 0% | 7.10 | [SPECIAL_ABILITIES_DESCRIPTION] |
+| 7.12 | [ENVIRONMENTAL_HAZARDS_TASK] | feature-dev | [ENVIRONMENTAL_HAZARDS_TIME] | 📋 Ready | 0% | 2.3 | [ENVIRONMENTAL_HAZARDS_DESCRIPTION] |
+| 7.13 | [ACHIEVEMENT_TASK] | feature-dev | [ACHIEVEMENT_TIME] | 📋 Ready | 0% | 7.1-7.12 | [ACHIEVEMENT_DESCRIPTION] |
+| 7.14 | [REPLAY_TASK] | feature-dev | [REPLAY_TIME] | 📋 Ready | 0% | 2.11 | [REPLAY_DESCRIPTION] |
+| 7.15 | [SANDBOX_TASK] | feature-dev | [SANDBOX_TIME] | 📋 Ready | 0% | 7.1-7.14 | [SANDBOX_DESCRIPTION] |
 
-### 8. Testing (8 Tasks)
+### 8. Testing ([TESTING_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 8.1 | Unit Tests Setup | testing | 2h | 📋 Ready | 0% | 1.3 | Unit testing framework |
-| 8.2 | Core Engine Unit Tests | testing | 4h | 📋 Ready | 0% | 8.1,2.1-2.15 | Engine testing |
-| 8.3 | Integration Tests | testing | 3h | 📋 Ready | 0% | 8.2 | Integration testing |
-| 8.4 | Multiplayer Tests | testing | 4h | 📋 Ready | 0% | 8.3,6.1-6.10 | Network testing |
-| 8.5 | UI Tests | testing | 3h | 📋 Ready | 0% | 8.1,3.1-3.10 | UI testing |
-| 8.6 | Load & Stress Tests | testing | 4h | 📋 Ready | 0% | 8.3 | Performance testing |
-| 8.7 | Security Penetration Tests | testing | 3h | 📋 Ready | 0% | 8.3 | Security testing |
-| 8.8 | Final Test Suite | testing | 4h | 📋 Ready | 0% | 8.1-8.7 | Comprehensive testing |
+| 8.1 | [UNIT_TEST_SETUP_TASK] | testing | [UNIT_TEST_SETUP_TIME] | 📋 Ready | 0% | 1.3 | [UNIT_TEST_SETUP_DESCRIPTION] |
+| 8.2 | [CORE_ENGINE_TESTS_TASK] | testing | [CORE_ENGINE_TESTS_TIME] | 📋 Ready | 0% | 8.1,2.1-2.15 | [CORE_ENGINE_TESTS_DESCRIPTION] |
+| 8.3 | [INTEGRATION_TESTS_TASK] | testing | [INTEGRATION_TESTS_TIME] | 📋 Ready | 0% | 8.2 | [INTEGRATION_TESTS_DESCRIPTION] |
+| 8.4 | [MULTIPLAYER_TESTS_TASK] | testing | [MULTIPLAYER_TESTS_TIME] | 📋 Ready | 0% | 8.3,6.1-6.10 | [MULTIPLAYER_TESTS_DESCRIPTION] |
+| 8.5 | [UI_TESTS_TASK] | testing | [UI_TESTS_TIME] | 📋 Ready | 0% | 8.1,3.1-3.10 | [UI_TESTS_DESCRIPTION] |
+| 8.6 | [LOAD_STRESS_TESTS_TASK] | testing | [LOAD_STRESS_TESTS_TIME] | 📋 Ready | 0% | 8.3 | [LOAD_STRESS_TESTS_DESCRIPTION] |
+| 8.7 | [SECURITY_TESTS_TASK] | testing | [SECURITY_TESTS_TIME] | 📋 Ready | 0% | 8.3 | [SECURITY_TESTS_DESCRIPTION] |
+| 8.8 | [FINAL_TEST_SUITE_TASK] | testing | [FINAL_TEST_SUITE_TIME] | 📋 Ready | 0% | 8.1-8.7 | [FINAL_TEST_SUITE_DESCRIPTION] |
 
-### 9. Deployment & Distribution (5 Tasks)
+### 9. Deployment & Distribution ([DEPLOYMENT_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 9.1 | Build Scripts | deployment | 3h | 📋 Ready | 0% | 1.4 | Build automation |
-| 9.2 | CI/CD Pipeline | deployment | 4h | 📋 Ready | 0% | 9.1 | Continuous deployment |
-| 9.3 | Packaging für Plattformen | deployment | 3h | 📋 Ready | 0% | 9.1 | Platform packaging |
-| 9.4 | Distribution Setup | deployment | 3h | 📋 Ready | 0% | 9.3 | Distribution channels |
-| 9.5 | Auto-Updater | deployment | 3h | 📋 Ready | 0% | 9.4 | Update system |
+| 9.1 | [BUILD_SCRIPTS_TASK] | deployment | [BUILD_SCRIPTS_TIME] | 📋 Ready | 0% | 1.4 | [BUILD_SCRIPTS_DESCRIPTION] |
+| 9.2 | [CI_CD_PIPELINE_TASK] | deployment | [CI_CD_PIPELINE_TIME] | 📋 Ready | 0% | 9.1 | [CI_CD_PIPELINE_DESCRIPTION] |
+| 9.3 | [PLATFORM_PACKAGING_TASK] | deployment | [PLATFORM_PACKAGING_TIME] | 📋 Ready | 0% | 9.1 | [PLATFORM_PACKAGING_DESCRIPTION] |
+| 9.4 | [DISTRIBUTION_SETUP_TASK] | deployment | [DISTRIBUTION_SETUP_TIME] | 📋 Ready | 0% | 9.3 | [DISTRIBUTION_SETUP_DESCRIPTION] |
+| 9.5 | [AUTO_UPDATER_TASK] | deployment | [AUTO_UPDATER_TIME] | 📋 Ready | 0% | 9.4 | [AUTO_UPDATER_DESCRIPTION] |
 
-### 10. Monitoring, Analytics, Post-Launch (7 Tasks)
+### 10. Monitoring, Analytics, Post-Launch ([MONITORING_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 10.1 | Monitoring Dashboard | monitoring | 3h | 📋 Ready | 0% | 9.2 | System monitoring |
-| 10.2 | Crash Reporting | monitoring | 2h | 📋 Ready | 0% | 10.1 | Error tracking |
-| 10.3 | Analytics Integration | monitoring | 3h | 📋 Ready | 0% | 10.1 | User analytics |
-| 10.4 | Feedback System | monitoring | 2h | 📋 Ready | 0% | 10.3 | User feedback |
-| 10.5 | Patch Management | monitoring | 3h | 📋 Ready | 0% | 9.5 | Update management |
-| 10.6 | Post-Launch Content Pipeline | monitoring | 4h | 📋 Ready | 0% | 10.5 | Content updates |
-| 10.7 | Community Support Tools | monitoring | 3h | 📋 Ready | 0% | 10.4 | Community features |
+| 10.1 | [MONITORING_DASHBOARD_TASK] | monitoring | [MONITORING_DASHBOARD_TIME] | 📋 Ready | 0% | 9.2 | [MONITORING_DASHBOARD_DESCRIPTION] |
+| 10.2 | [CRASH_REPORTING_TASK] | monitoring | [CRASH_REPORTING_TIME] | 📋 Ready | 0% | 10.1 | [CRASH_REPORTING_DESCRIPTION] |
+| 10.3 | [ANALYTICS_TASK] | monitoring | [ANALYTICS_TIME] | 📋 Ready | 0% | 10.1 | [ANALYTICS_DESCRIPTION] |
+| 10.4 | [FEEDBACK_SYSTEM_TASK] | monitoring | [FEEDBACK_SYSTEM_TIME] | 📋 Ready | 0% | 10.3 | [FEEDBACK_SYSTEM_DESCRIPTION] |
+| 10.5 | [PATCH_MANAGEMENT_TASK] | monitoring | [PATCH_MANAGEMENT_TIME] | 📋 Ready | 0% | 9.5 | [PATCH_MANAGEMENT_DESCRIPTION] |
+| 10.6 | [CONTENT_PIPELINE_TASK] | monitoring | [CONTENT_PIPELINE_TIME] | 📋 Ready | 0% | 10.5 | [CONTENT_PIPELINE_DESCRIPTION] |
+| 10.7 | [COMMUNITY_TOOLS_TASK] | monitoring | [COMMUNITY_TOOLS_TIME] | 📋 Ready | 0% | 10.4 | [COMMUNITY_TOOLS_DESCRIPTION] |
 
-### 11. Genre-Specific Tasks - [GENRE] (10 Tasks)
+### 11. Genre-Specific Tasks - [GENRE] ([GENRE_SPECIFIC_COUNT] Tasks)
 | ID | Task Name | Category | Time | Status | Progress | Dependencies | Notes |
 |----|-----------|----------|------|--------|----------|--------------|-------|
-| 11.1 | [GENRE] Core Mechanics | game-[GENRE_LOWER] | 5h | 📋 Ready | 0% | 7.1-7.15 | [GENRE] specific gameplay |
-| 11.2 | [GENRE] UI Elements | game-[GENRE_LOWER] | 4h | 📋 Ready | 0% | 3.1-3.10,11.1 | [GENRE] specific UI |
-| 11.3 | [GENRE] Asset Integration | game-[GENRE_LOWER] | 4h | 📋 Ready | 0% | 4.1-4.10,11.1 | [GENRE] specific assets |
-| 11.4 | [GENRE] Balancing | game-[GENRE_LOWER] | 4h | 📋 Ready | 0% | 11.1-11.3 | [GENRE] game balance |
-| 11.5 | [GENRE] Testing | game-[GENRE_LOWER] | 3h | 📋 Ready | 0% | 8.1-8.8,11.1-11.4 | [GENRE] specific testing |
-| 11.6 | [GENRE] Performance Optimization | game-[GENRE_LOWER] | 3h | 📋 Ready | 0% | 11.1-11.5 | [GENRE] optimization |
-| 11.7 | [GENRE] Accessibility | game-[GENRE_LOWER] | 2h | 📋 Ready | 0% | 3.9,11.1-11.6 | [GENRE] accessibility |
-| 11.8 | [GENRE] Localization | game-[GENRE_LOWER] | 3h | 📋 Ready | 0% | 3.8,11.1-11.7 | [GENRE] localization |
-| 11.9 | [GENRE] Multiplayer Features | game-[GENRE_LOWER] | 4h | 📋 Ready | 0% | 6.1-6.10,11.1-11.8 | [GENRE] multiplayer |
-| 11.10 | [GENRE] Final Polish | game-[GENRE_LOWER] | 3h | 📋 Ready | 0% | 11.1-11.9 | [GENRE] final touches |
+| 11.1 | [GENRE_CORE_MECHANICS_TASK] | game-[GENRE_LOWER] | [GENRE_CORE_MECHANICS_TIME] | 📋 Ready | 0% | 7.1-7.15 | [GENRE_CORE_MECHANICS_DESCRIPTION] |
+| 11.2 | [GENRE_UI_ELEMENTS_TASK] | game-[GENRE_LOWER] | [GENRE_UI_ELEMENTS_TIME] | 📋 Ready | 0% | 3.1-3.10,11.1 | [GENRE_UI_ELEMENTS_DESCRIPTION] |
+| 11.3 | [GENRE_ASSET_INTEGRATION_TASK] | game-[GENRE_LOWER] | [GENRE_ASSET_INTEGRATION_TIME] | 📋 Ready | 0% | 4.1-4.10,11.1 | [GENRE_ASSET_INTEGRATION_DESCRIPTION] |
+| 11.4 | [GENRE_BALANCING_TASK] | game-[GENRE_LOWER] | [GENRE_BALANCING_TIME] | 📋 Ready | 0% | 11.1-11.3 | [GENRE_BALANCING_DESCRIPTION] |
+| 11.5 | [GENRE_TESTING_TASK] | game-[GENRE_LOWER] | [GENRE_TESTING_TIME] | 📋 Ready | 0% | 8.1-8.8,11.1-11.4 | [GENRE_TESTING_DESCRIPTION] |
+| 11.6 | [GENRE_PERFORMANCE_TASK] | game-[GENRE_LOWER] | [GENRE_PERFORMANCE_TIME] | 📋 Ready | 0% | 11.1-11.5 | [GENRE_PERFORMANCE_DESCRIPTION] |
+| 11.7 | [GENRE_ACCESSIBILITY_TASK] | game-[GENRE_LOWER] | [GENRE_ACCESSIBILITY_TIME] | 📋 Ready | 0% | 3.9,11.1-11.6 | [GENRE_ACCESSIBILITY_DESCRIPTION] |
+| 11.8 | [GENRE_LOCALIZATION_TASK] | game-[GENRE_LOWER] | [GENRE_LOCALIZATION_TIME] | 📋 Ready | 0% | 3.8,11.1-11.7 | [GENRE_LOCALIZATION_DESCRIPTION] |
+| 11.9 | [GENRE_MULTIPLAYER_TASK] | game-[GENRE_LOWER] | [GENRE_MULTIPLAYER_TIME] | 📋 Ready | 0% | 6.1-6.10,11.1-11.8 | [GENRE_MULTIPLAYER_DESCRIPTION] |
+| 11.10 | [GENRE_FINAL_POLISH_TASK] | game-[GENRE_LOWER] | [GENRE_FINAL_POLISH_TIME] | 📋 Ready | 0% | 11.1-11.9 | [GENRE_FINAL_POLISH_DESCRIPTION] |
 
 ## Progress Summary
-- **Total Tasks**: 110
+- **Total Tasks**: [TOTAL_TASKS]
 - **Completed**: 0
 - **In Progress**: 0
-- **Ready**: 110
+- **Ready**: [TOTAL_TASKS]
 - **Blocked**: 0
 - **Overall Progress**: 0%
 
