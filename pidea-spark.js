@@ -222,8 +222,8 @@ class CDPTaskAutomationWorkflow {
         
         // Update project paths based on workspace detection
         if (workspaceInfo.isInWorkspace) {
-            this.config.orchestratorFile = path.join(workspaceInfo.outputDir, choice.project.name, 'system', 'orchestrator.md');
-            this.config.progressFile = path.join(workspaceInfo.outputDir, choice.project.name, 'system', 'progress-tracker.md');
+            this.config.orchestratorFile = path.join(workspaceInfo.outputDir, 'system', 'orchestrator.md');
+            this.config.progressFile = path.join(workspaceInfo.outputDir, 'system', 'progress-tracker.md');
             this.log(`🎯 Using workspace project: ${workspaceInfo.workspacePath}`);
         } else {
             this.config.orchestratorFile = choice.project.path;

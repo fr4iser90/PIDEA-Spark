@@ -1,10 +1,10 @@
 export const TASK_PATTERNS = {
     // File naming patterns
     filePatterns: {
-        index: 'pidea-spark-output/tasks/[category]/[name]/[name]-index.md',
-        implementation: 'pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md',
-        phase: 'pidea-spark-output/tasks/[category]/[name]/[name]-phase-[number].md',
-        analysis: 'pidea-spark-output/tasks/[category]/[name]/[name]-analysis.md'
+        index: 'pidea-spark-output/tasks/[category]/[name]/index.md',
+        implementation: 'pidea-spark-output/tasks/[category]/[name]/implementation.md',
+        phase: 'pidea-spark-output/tasks/[category]/[name]/phase-[number].md',
+        analysis: 'pidea-spark-output/tasks/[category]/[name]/analysis.md'
     },
 
     // Phase management patterns
@@ -12,9 +12,9 @@ export const TASK_PATTERNS = {
         table: `## 📊 Phase Breakdown
 | Phase | File | Status | Time | Progress | Started | Completed |
 |-------|------|--------|------|----------|---------|-----------|
-| 1 | [Phase 1](./[name]-phase-1.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
-| 2 | [Phase 2](./[name]-phase-2.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
-| 3 | [Phase 3](./[name]-phase-3.md) | [Status] | [X]h | [X]% | [Date] | [Date] |`,
+| 1 | [Phase 1](./phase-1.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
+| 2 | [Phase 2](./phase-2.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
+| 3 | [Phase 3](./phase-3.md) | [Status] | [X]h | [X]% | [Date] | [Date] |`,
         
         phases: [
             { number: 1, title: 'Foundation Setup', description: 'Create base structures and configurations' },
@@ -60,13 +60,13 @@ export const TASK_PATTERNS = {
     // Directory structure patterns
     directoryStructure: {
         template: `pidea-spark-output/tasks/[category]/[name]/
-├── [name]-index.md (Master index)
-├── [name]-implementation.md (Complete implementation plan)
-├── [name]-phase-1.md (Foundation Setup)
-├── [name]-phase-2.md (Core Implementation)
-├── [name]-phase-3.md (Integration & Testing)
-├── [name]-phase-4.md (Documentation & Validation)
-└── [name]-phase-5.md (Deployment Preparation)`
+├── index.md (Master index)
+├── implementation.md (Complete implementation plan)
+├── phase-1.md (Foundation Setup)
+├── phase-2.md (Core Implementation)
+├── phase-3.md (Integration & Testing)
+├── phase-4.md (Documentation & Validation)
+└── phase-5.md (Deployment Preparation)`
     },
 
     // Task splitting patterns
@@ -154,22 +154,22 @@ X hours
 ## 📁 File Structure
 \`\`\`
 pidea-spark-output/tasks/[category]/[name]/
-├── [name]-index.md (this file)
-├── [name]-implementation.md
-├── [name]-phase-1.md
-├── [name]-phase-2.md
-└── [name]-phase-3.md
+├── index.md (this file)
+├── implementation.md
+├── phase-1.md
+├── phase-2.md
+└── phase-3.md
 \`\`\`
 
 ## 🎯 Main Implementation
-- **[Task Name Implementation](./[name]-implementation.md)** - Complete implementation plan and specifications
+- **[Task Name Implementation](./implementation.md)** - Complete implementation plan and specifications
 
 ## 📊 Phase Breakdown
 | Phase | File | Status | Time | Progress |
 |-------|------|--------|------|----------|
-| 1 | [Phase 1](./[name]-phase-1.md) | [Status] | [X]h | [X]% |
-| 2 | [Phase 2](./[name]-phase-2.md) | [Status] | [X]h | [X]% |
-| 3 | [Phase 3](./[name]-phase-3.md) | [Status] | [X]h | [X]% |
+| 1 | [Phase 1](./phase-1.md) | [Status] | [X]h | [X]% |
+| 2 | [Phase 2](./phase-2.md) | [Status] | [X]h | [X]% |
+| 3 | [Phase 3](./phase-3.md) | [Status] | [X]h | [X]% |
 
 ## 📈 Progress Tracking
 - **Overall Progress**: [X]% Complete
@@ -189,8 +189,8 @@ pidea-spark-output/tasks/[category]/[name]/
 - [Progress made]
 
 ## 🚀 Quick Actions
-- [View Implementation Plan](./[name]-implementation.md)
-- [Start Phase 1](./[name]-phase-1.md)
+- [View Implementation Plan](./implementation.md)
+- [Start Phase 1](./phase-1.md)
 - [Review Progress](#progress-tracking)
 - [Update Status](#notes--updates)`,
 
@@ -294,9 +294,9 @@ export const VALIDATION_PATTERNS = {
         required: ['index', 'implementation'],
         optional: ['phase-1', 'phase-2', 'phase-3', 'phase-4', 'phase-5'],
         patterns: {
-            index: 'pidea-spark-output/tasks/[category]/[name]/[name]-index.md',
-            implementation: 'pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md',
-            phase: 'pidea-spark-output/tasks/[category]/[name]/[name]-phase-[number].md'
+            index: 'pidea-spark-output/tasks/[category]/[name]/index.md',
+            implementation: 'pidea-spark-output/tasks/[category]/[name]/implementation.md',
+            phase: 'pidea-spark-output/tasks/[category]/[name]/phase-[number].md'
         }
     },
 

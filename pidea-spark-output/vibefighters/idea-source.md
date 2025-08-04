@@ -17,6 +17,7 @@
 - **Settings & Customization**: User preferences and configuration options
 
 ### **Assets & Content**
+- **Provided Assets**: Check and use mystic_woods_free_2.2 
 - **Sprites System**: Character sprites, animations, and visual assets
 - **Audio System**: Sound effects, music, and audio management
 - **Visual Effects**: Particle effects, screen effects, and visual feedback

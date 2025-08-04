@@ -189,7 +189,9 @@ export class PlanningWorkflow {
 
     loadTemplateStructure(templatePath) {
         const structure = [];
-        const categories = fs.readdirSync(templatePath + '/tasks');
+        const categories = fs.readdirSync(templatePath + '/tasks', { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory()) // Only process directories
+            .map(dirent => dirent.name);
         
         for (const category of categories) {
             if (category.startsWith('.')) continue;
@@ -198,7 +200,10 @@ export class PlanningWorkflow {
             const categoryName = category.split('-').slice(1).join(' ');
             const tasks = [];
             
-            const taskDirs = fs.readdirSync(categoryPath);
+            const taskDirs = fs.readdirSync(categoryPath, { withFileTypes: true })
+                .filter(dirent => dirent.isDirectory()) // Only process directories
+                .map(dirent => dirent.name);
+                
             for (const taskDir of taskDirs) {
                 if (taskDir.startsWith('.')) continue;
                 
@@ -758,130 +763,196 @@ ${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') 
     }
 
     async createDetailedTaskFilesViaAI() {
-        this.log('🤖 Creating detailed task files via AI...');
+        this.log('🤖 Creating detailed task files via AI (one task at a time)...');
         
         try {
             // Get orchestrator path
             const orchestratorPath = path.join(this.projectPath, 'system', 'orchestrator.md');
             
-            // Generate comprehensive task creation prompt
-            const prompt = generateComprehensiveTaskCreationPrompt(orchestratorPath, this.gameConfig);
+            // Get tasks directory
+            const tasksDir = path.join(this.projectPath, 'tasks');
             
-            this.log('📤 Sending comprehensive task creation request to AI...');
-            const response = await this.sendToAIviaCDP(prompt, { maxStableChecks: 20 });
+            // Find the first incomplete task
+            const incompleteTask = await this.findNextIncompleteTask(tasksDir, orchestratorPath);
             
-            // Parse the response to extract task creation results
-            const result = this.parseTaskCreationResponse(response);
-            
-            if (result.status === 'completed') {
-                this.log(`✅ Successfully created ${result.tasks_created} detailed task files`);
-                this.log(`📊 Progress: ${result.tasks_created}/${result.tasks_processed} tasks processed`);
-                this.log(`⏱️ Estimated completion time: ${result.estimated_completion_time}`);
-                
-                if (result.orchestrator_updated) {
-                    this.log('✅ Orchestrator file updated with progress and validation');
-                }
-                
-                if (result.validation_passed) {
-                    this.log('✅ All task dependencies validated successfully');
-                }
-            } else {
-                this.log(`⚠️ Task creation partially completed: ${result.tasks_created}/${result.tasks_processed} tasks`, 'WARNING');
-                
-                // Check if we need to continue with remaining tasks
-                const orchestratorContent = fs.readFileSync(orchestratorPath, 'utf8');
-                const totalTasksInOrchestrator = (orchestratorContent.match(/\|\s*\d+\.\d+\s*\|/g) || []).length;
-                const tasksDir = path.join(this.projectPath, 'tasks');
-                const createdTaskDirs = fs.existsSync(tasksDir) ? 
-                    fs.readdirSync(tasksDir, { withFileTypes: true })
-                        .filter(dirent => dirent.isDirectory())
-                        .map(dirent => dirent.name).length : 0;
-                
-                const missingTasks = totalTasksInOrchestrator - createdTaskDirs;
-                
-                if (missingTasks > 0) {
-                    this.log(`🔄 ${missingTasks} tasks still missing, continuing with new chat...`);
-                    await this.continueTaskCreationWithNewChat(missingTasks, orchestratorPath);
-                }
+            if (!incompleteTask) {
+                this.log('✅ All tasks appear to be complete!');
+                return;
             }
             
-            this.log('✅ Detailed task files creation via AI completed');
+            this.log(`🎯 Working on task: ${incompleteTask.name}`);
             
-        } catch (error) {
-            this.log(`❌ Error creating detailed task files: ${error.message}`, 'ERROR');
-            throw error;
-        }
-    }
-
-    async continueTaskCreationWithNewChat(missingTasks, orchestratorPath) {
-        this.log(`🆕 Opening new chat to create remaining ${missingTasks} tasks...`);
-        
-        try {
-            // Generate a follow-up prompt for remaining tasks
-            const followUpPrompt = generateContinueTaskCreationPrompt(missingTasks, orchestratorPath, this.projectPath);
+            // Use the existing prompt from the prompts folder
+            const prompt = generateComprehensiveTaskCreationPrompt(orchestratorPath, this.gameConfig);
             
-            // Send follow-up prompt
-            this.log('📤 Sending continue task creation request to AI...');
-            const response = await this.sendToAIviaCDP(followUpPrompt, { maxStableChecks: 20 });
+            this.log('📤 Sending single task creation request to AI...');
+            const response = await this.sendToAIviaCDP(prompt, { maxStableChecks: 20 });
             
             // Wait for file changes
             await this.delay(3000);
             
-            // Check final status
-            const finalTasksDir = path.join(this.projectPath, 'tasks');
-            const finalCreatedTasks = fs.existsSync(finalTasksDir) ? 
-                fs.readdirSync(finalTasksDir, { withFileTypes: true })
-                    .filter(dirent => dirent.isDirectory())
-                    .map(dirent => dirent.name).length : 0;
+            // Validate the task completion
+            const taskCompleted = await this.validateSingleTaskCompletion(incompleteTask, tasksDir);
             
-            const finalOrchestratorContent = fs.readFileSync(orchestratorPath, 'utf8');
-            const finalTotalTasks = (finalOrchestratorContent.match(/\|\s*\d+\.\d+\s*\|/g) || []).length;
-            
-            this.log(`📊 Final status: ${finalCreatedTasks}/${finalTotalTasks} tasks created`);
-            
-            if (finalCreatedTasks >= finalTotalTasks * 0.95) { // Allow 5% tolerance
-                this.log('✅ Task creation completed successfully!');
+            if (taskCompleted) {
+                this.log(`✅ Task "${incompleteTask.name}" completed successfully!`);
+                
+                // Update orchestrator with progress
+                await this.updateOrchestratorProgress(orchestratorPath, incompleteTask);
+                
+                // Check if there are more tasks to do
+                const nextIncompleteTask = await this.findNextIncompleteTask(tasksDir, orchestratorPath);
+                
+                if (nextIncompleteTask) {
+                    this.log(`🔄 ${nextIncompleteTask.name} is next - start new chat to continue`);
+                    this.log('💡 Start a new chat and run the planning workflow again to continue with the next task');
+                } else {
+                    this.log('🎉 All tasks completed!');
+                }
             } else {
-                this.log(`⚠️ Still missing ${finalTotalTasks - finalCreatedTasks} tasks`, 'WARNING');
+                this.log(`⚠️ Task "${incompleteTask.name}" may need more work`, 'WARNING');
+                this.log('💡 Start a new chat to continue working on this task');
             }
             
         } catch (error) {
-            this.log(`❌ Error continuing task creation: ${error.message}`, 'ERROR');
+            this.log(`❌ Error creating task files: ${error.message}`, 'ERROR');
             throw error;
         }
     }
 
-    parseTaskCreationResponse(response) {
-        try {
-            // Try to extract JSON from the response
-            const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
-            if (jsonMatch) {
-                return JSON.parse(jsonMatch[1]);
+    async findNextIncompleteTask(tasksDir, orchestratorPath) {
+        // Read orchestrator to get all tasks
+        const orchestratorContent = fs.readFileSync(orchestratorPath, 'utf8');
+        const taskMatches = orchestratorContent.match(/\|\s*(\d+\.\d+)\s*\|([^|]+)\|/g);
+        
+        if (!taskMatches) {
+            return null;
+        }
+        
+        // Parse tasks from orchestrator
+        const tasks = [];
+        for (const match of taskMatches) {
+            const parts = match.split('|').map(p => p.trim());
+            if (parts.length >= 3) {
+                const taskId = parts[1];
+                const taskName = parts[2];
+                const status = parts[4] || '📋 Ready';
+                
+                tasks.push({
+                    id: taskId,
+                    name: taskName,
+                    status: status
+                });
+            }
+        }
+        
+        // Check each task for completion
+        for (const task of tasks) {
+            const taskPath = await this.findTaskPath(task, tasksDir);
+            
+            if (taskPath) {
+                const isComplete = await this.isTaskComplete(taskPath);
+                if (!isComplete) {
+                    return task;
+                }
+            } else {
+                // Task directory doesn't exist - needs to be created
+                return task;
+            }
+        }
+        
+        return null;
+    }
+
+    async findTaskPath(task, tasksDir) {
+        if (!fs.existsSync(tasksDir)) {
+            return null;
+        }
+        
+        const categories = fs.readdirSync(tasksDir, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name);
+        
+        for (const category of categories) {
+            const categoryPath = path.join(tasksDir, category);
+            const taskDirs = fs.readdirSync(categoryPath, { withFileTypes: true })
+                .filter(dirent => dirent.isDirectory())
+                .map(dirent => dirent.name);
+            
+            for (const taskDir of taskDirs) {
+                const taskPath = path.join(categoryPath, taskDir);
+                const indexPath = path.join(taskPath, 'index.md');
+                
+                if (fs.existsSync(indexPath)) {
+                    const content = fs.readFileSync(indexPath, 'utf8');
+                    if (content.includes(task.name) || taskDir.includes(task.name.toLowerCase().replace(/\s+/g, '-'))) {
+                        return taskPath;
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    async isTaskComplete(taskPath) {
+        const requiredFiles = ['index.md', 'implementation.md', 'phase-1.md', 'phase-2.md', 'phase-3.md'];
+        
+        for (const file of requiredFiles) {
+            const filePath = path.join(taskPath, file);
+            if (!fs.existsSync(filePath)) {
+                return false;
             }
             
-            // If no JSON found, return a default structure
-            return {
-                status: 'partial',
-                tasks_processed: 0,
-                tasks_created: 0,
-                orchestrator_updated: false,
-                validation_passed: false,
-                next_steps: 'Manual review required',
-                estimated_completion_time: 'Unknown',
-                dependencies_resolved: false
-            };
+            // Check for placeholders
+            const content = fs.readFileSync(filePath, 'utf8');
+            if (this.hasPlaceholders(content)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    hasPlaceholders(content) {
+        const placeholderPatterns = [
+            /\[GAME_ENGINE\]/g,
+            /\[GAME_GENRE\]/g,
+            /\[GIT_BRANCH_STRATEGY\]/g,
+            /To be filled/i,
+            /\[TO BE FILLED\]/i,
+            /placeholder/i,
+            /\[PLACEHOLDER\]/i,
+            /TODO/i,
+            /FIXME/i,
+            /TBD/i
+        ];
+        
+        return placeholderPatterns.some(pattern => pattern.test(content));
+    }
+
+    async validateSingleTaskCompletion(task, tasksDir) {
+        const taskPath = await this.findTaskPath(task, tasksDir);
+        
+        if (!taskPath) {
+            return false;
+        }
+        
+        return await this.isTaskComplete(taskPath);
+    }
+
+    async updateOrchestratorProgress(orchestratorPath, completedTask) {
+        try {
+            let content = fs.readFileSync(orchestratorPath, 'utf8');
+            
+            // Update the specific task's status
+            const taskPattern = new RegExp(`(\\|\\s*${completedTask.id}\\s*\\|[^|]+\\|[^|]+\\|)\\s*[^|]*\\|`, 'g');
+            content = content.replace(taskPattern, `$1 ✅ Completed |`);
+            
+            fs.writeFileSync(orchestratorPath, content);
+            this.log(`✅ Updated orchestrator progress for task ${completedTask.id}`);
         } catch (error) {
-            this.log(`⚠️ Could not parse AI response: ${error.message}`, 'WARNING');
-            return {
-                status: 'failed',
-                tasks_processed: 0,
-                tasks_created: 0,
-                orchestrator_updated: false,
-                validation_passed: false,
-                next_steps: 'Manual intervention required',
-                estimated_completion_time: 'Unknown',
-                dependencies_resolved: false
-            };
+            this.log(`⚠️ Could not update orchestrator: ${error.message}`, 'WARNING');
         }
     }
 
@@ -937,7 +1008,7 @@ ${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') 
                 for (const taskEntry of categoryEntries) {
                     if (taskEntry.isDirectory()) {
                         const taskPath = path.join(categoryPath, taskEntry.name);
-                        const indexPath = path.join(taskPath, 'index.md');
+                        const indexPath = path.join(taskPath, `${task.name}-index.md`);
                         
                         if (fs.existsSync(indexPath)) {
                             // Check if this task directory matches our task
@@ -955,7 +1026,7 @@ ${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') 
     }
 
     async updateTaskIndex(task, taskId, taskDir) {
-        const indexPath = path.join(taskDir, 'index.md');
+        const indexPath = path.join(taskDir, `${task.name}-index.md`);
         
         if (fs.existsSync(indexPath)) {
             const indexContent = `# Task ${taskId}: ${task.name}
@@ -1269,6 +1340,22 @@ ${this.customizedTasks.map(category =>
                 this.log('✅ Continuing with existing orchestrator content');
             }
             
+            // NEW: Show task completion status
+            const { scanAllTasks } = await import('../ai/prompts/shared/task-check-state.js');
+            const tasksDir = path.join(this.projectPath, 'tasks');
+            const taskStatus = scanAllTasks(tasksDir);
+            
+            this.log(`📊 Task Completion Status:`);
+            this.log(`   📋 Total Tasks: ${taskStatus.totalTasks}`);
+            this.log(`   ✅ Actually Complete: ${taskStatus.completedTasks} (${taskStatus.percentage}%)`);
+            this.log(`   ⚠️ Tasks with placeholders: ${taskStatus.tasksWithPlaceholders}`);
+            
+            if (taskStatus.tasksWithPlaceholders > 0) {
+                this.log(`⚠️ ${taskStatus.tasksWithPlaceholders} tasks still contain placeholder content and need to be completed.`);
+            } else {
+                this.log(`✅ All tasks are properly completed and ready for execution.`);
+            }
+            
         } catch (error) {
             this.log(`❌ Error validating orchestrator: ${error.message}`, 'ERROR');
             throw error;
@@ -1300,7 +1387,36 @@ ${this.customizedTasks.map(category =>
             /\[CURRENT_DATE\]/g,
             /\[GENRE_LOWER\]/g,
             /To be defined/g,
-            /\[GAME_DESCRIPTION\]/g
+            /\[GAME_DESCRIPTION\]/g,
+            /\[GAME_ENGINE\]/g,
+            /\[GAME_GENRE\]/g,
+            /\[GIT_BRANCH_STRATEGY\]/g,
+            /\[GIT_WORKFLOW\]/g,
+            /\[GIT_HOOKS\]/g,
+            /\[GIT_PERMISSIONS\]/g,
+            /\[GIT_INTEGRATION\]/g,
+            /\[REPOSITORY_STRUCTURE\]/g,
+            /\[BRANCH_PROTECTION\]/g,
+            /\[COMMIT_STANDARDS\]/g,
+            /\[HOOKS_WORKING\]/g,
+            /\[CI_INTEGRATION\]/g,
+            /\[GITIGNORE_FILE\]/g,
+            /\[GIT_HOOKS_DIR\]/g,
+            /\[BRANCH_CONFIG\]/g,
+            /\[VERSION\]/g,
+            /\[FRAMEWORK\]/g,
+            /\[LIBRARY\]/g,
+            /\[TOOLS\]/g,
+            /\[PLATFORM\]/g,
+            /\[ART_STYLE\]/g,
+            /\[PERFORMANCE\]/g,
+            /\[TARGET_PLATFORM\]/g,
+            /\[MULTIPLAYER\]/g,
+            /\[SAVE_SYSTEM\]/g,
+            /\[Status\]/g,
+            /\[X\]h/g,
+            /\[X\]%/g,
+            /\[Date\]/g
         ];
         
         let replacements = 0;

@@ -87,8 +87,8 @@ ${taskDetails}
 - Add proper error handling and validation
 - Implement complete functionality, not stubs
 - **Organize files in hierarchical structure**: \`pidea-spark-output/tasks/[category]/[name]/\`
-- **Create main implementation file**: \`[name]-implementation.md\`
-- **Create phase files**: \`[name]-phase-[number].md\` for subtasks
+- **Create main implementation file**: \`implementation.md\`
+- **Create phase files**: \`phase-[number].md\` for subtasks
 
 ### Intelligent Test Path Resolution
 \`\`\`javascript
@@ -127,8 +127,8 @@ const resolveTestPath = (category, componentName, componentType = 'service') => 
 - Ensure backward compatibility
 
 ### Implementation File Updates
-- Create/update \`pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md\`
-- Create/update phase files: \`pidea-spark-output/tasks/[category]/[name]/[name]-phase-[number].md\`
+- Create/update \`pidea-spark-output/tasks/[category]/[name]/implementation.md\`
+- Create/update phase files: \`pidea-spark-output/tasks/[category]/[name]/phase-[number].md\`
 - Track progress through all phases with timestamps: \`[RUN: date -u +"%Y-%m-%dT%H:%M:%S.000Z"]\`
 - Document all changes and decisions with timestamps
 - Update completion status automatically with timestamps

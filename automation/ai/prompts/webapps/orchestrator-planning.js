@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 export function generateWebAppComprehensiveTaskCreationPrompt(orchestratorPath, appConfig) {
-    return `# Web Application Comprehensive Task Creation Request
+    return `# Web Application Single Task Creation Request
 
 ## Orchestrator File
 Please read and analyze the orchestrator file at: ${orchestratorPath}
@@ -18,10 +18,11 @@ Please read and analyze the orchestrator file at: ${orchestratorPath}
 - **API Integration**: ${appConfig.features.apiIntegration ? 'Yes' : 'No'}
 
 ## Request
-Please create detailed implementation files for ALL tasks in the orchestrator:
+**IMPORTANT: Work on ONLY ONE task at a time!**
 
-1. **Read the orchestrator file** and extract all tasks
-2. **For each task**, create detailed implementation files:
+1. **Find the FIRST incomplete task** in the orchestrator that needs work
+2. **Focus ONLY on that single task** - do not touch any other tasks
+3. **Create detailed implementation files for ONLY that one task**:
    - Task index with overview and requirements
    - Implementation plan with technical details
    - Three-phase breakdown (Foundation, Core, Integration)
@@ -29,36 +30,30 @@ Please create detailed implementation files for ALL tasks in the orchestrator:
    - Dependencies and prerequisites
    - Estimated time and resources
 
-3. **Update the orchestrator file** with:
-   - Correct progress indicators
-   - Validated dependencies
-   - Updated time estimates
-   - Task status validation
+4. **Update ONLY that task's status** in the orchestrator file
 
-4. **Create task directories** for each task with proper structure
+## Critical Instructions
+- **ONLY work on ONE task** - ignore all other tasks
+- **Do NOT create scripts or batch operations**
+- **Do NOT try to process multiple tasks**
+- **Focus on quality over quantity**
+- **Make the single task production-ready**
+- **Update only the specific task's progress in orchestrator**
 
-## Important Instructions
-- Process ALL tasks from the orchestrator
-- Create comprehensive, actionable content for each task
-- Follow the existing code patterns and conventions
-- Ensure all dependencies are correctly mapped
-- Update the orchestrator file directly with progress and validation
-- Make all content production-ready with proper error handling
-- Add proper documentation and testing requirements for each task
+## File Structure for Single Task
+For the ONE task you're working on, create:
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/index.md\` - Task overview
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/implementation.md\` - Implementation plan
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/phase-1.md\` - Foundation phase
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/phase-2.md\` - Core phase
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/phase-3.md\` - Integration phase
 
-## File Structure
-For each task, create directories following the template structure:
-- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/index.md\` - Task overview and requirements
-- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/implementation.md\` - Technical implementation plan
-- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/phases.md\` - Three-phase breakdown
-- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/validation.md\` - Success criteria and testing
+## Task Selection Priority
+1. **First priority**: Tasks with missing files
+2. **Second priority**: Tasks with placeholder content
+3. **Third priority**: Tasks marked as "Ready" but not started
 
-**NAMING CONVENTIONS:**
-- **Task IDs in orchestrator**: Use dots (1.1, 1.2, 2.1, etc.)
-- **Directory names**: Use dashes (01-project-setup, 01-git-repository-branching)
-- **Category names**: Use dashes (project-setup, frontend, backend)
-
-**DIRECTLY UPDATE THE ORCHESTRATOR FILE** with progress and validation results.`;
+**REMEMBER: Only ONE task per chat session!**`;
 }
 
 export function generateWebAppContinueTaskCreationPrompt(missingTasks, orchestratorPath, projectPath) {
@@ -68,7 +63,7 @@ export function generateWebAppContinueTaskCreationPrompt(missingTasks, orchestra
             .filter(dirent => dirent.isDirectory())
             .map(dirent => dirent.name).length : 0;
     
-    return `# Web Application Continue Task Creation - Remaining Tasks
+    return `# Web Application Continue Task Creation - Single Task Focus
 
 ## Status Update
 - **Total Tasks Required**: ${missingTasks + createdTasks}
@@ -79,38 +74,30 @@ export function generateWebAppContinueTaskCreationPrompt(missingTasks, orchestra
 Please read the orchestrator file at: ${orchestratorPath}
 
 ## Request
-Please create the remaining ${missingTasks} task files that are still missing:
+**IMPORTANT: Work on ONLY ONE task at a time!**
 
-1. **Check which tasks are missing** by comparing orchestrator tasks with existing task directories
-2. **Create only the missing task files** with proper structure:
+1. **Find the NEXT incomplete task** that needs work
+2. **Focus ONLY on that single task** - do not touch any other tasks
+3. **Create detailed implementation files for ONLY that one task**:
    - Task index with overview and requirements
    - Implementation plan with technical details
    - Three-phase breakdown (Foundation, Core, Integration)
    - Success criteria and validation methods
 
-3. **Update the orchestrator file** with:
-   - Correct progress indicators
-   - Updated task status
-   - Validation results
+4. **Update ONLY that task's status** in the orchestrator file
 
-## File Structure
-For each task, create directories following the template structure:
-- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/index.md\` - Task overview and requirements
-- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/implementation.md\` - Technical implementation plan
-- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/phases.md\` - Three-phase breakdown
-- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/validation.md\` - Success criteria and testing
+## Critical Instructions
+- **ONLY work on ONE task** - ignore all other tasks
+- **Do NOT create scripts or batch operations**
+- **Do NOT try to process multiple tasks**
+- **Focus on quality over quantity**
+- **Make the single task production-ready**
+- **Update only the specific task's progress in orchestrator**
 
-**NAMING CONVENTIONS:**
-- **Task IDs in orchestrator**: Use dots (1.1, 1.2, 2.1, etc.)
-- **Directory names**: Use dashes (01-project-setup, 01-git-repository-branching)
-- **Category names**: Use dashes (project-setup, frontend, backend)
+## Task Selection Priority
+1. **First priority**: Tasks with missing files
+2. **Second priority**: Tasks with placeholder content
+3. **Third priority**: Tasks marked as "Ready" but not started
 
-## Important Instructions
-- Focus ONLY on the missing tasks
-- Don't recreate existing task files
-- Ensure all ${missingTasks} missing tasks are created
-- Update orchestrator progress to show 100% completion
-- Make all content production-ready
-
-**CRITICAL**: Complete the remaining task creation to reach 100% completion.`;
+**REMEMBER: Only ONE task per chat session!**`;
 }

@@ -1,86 +1,78 @@
-# Task 11.1: [GENRE] Core Mechanics
+# Task 11.1: Genre Core Mechanics
 
-## Task Overview
-- **Task ID**: 11.1
-- **Category**: game-[GENRE_LOWER]
-- **Time**: [GENRE_MECHANICS_TIME]
-- **Dependencies**: 7.1-7.15 (Feature Development)
-- **Type**: genre-specific
+## 🎮 Task Overview
+- **Task ID**: 11.1 (e.g., 1.2, 2.1, 3.4)
+- **AI_FLAG**: NEEDS_CUSTOMIZATION
+- **Category**: Genre Specific (e.g., project-setup, core-engine, frontend-ui, assets-pipeline)
+- **Priority**: Medium (High/Medium/Low)
+- **Estimated Time**: 4h (e.g., 1h, 2h, 4h, 8h)
+- **Dependencies**: None (e.g., 1.1, 2.3, or "None")
+- **Type**: standard-template (standard-template, engine-specific, genre-specific)
+- **Game Engine**: [GAME_ENGINE] (e.g., Unity, Unreal, Godot, Custom)
+- **Genre**: [GAME_GENRE] (e.g., RPG, FPS, Platformer, Strategy)
+- **Status**: pending (pending/in_progress/completed/failed/cancelled)
+- **Created**: 2025-08-04T18:08:12.280Z
+- **Last Updated**: 2025-08-04T18:08:12.280Z
 
-## Task Description
-Implement the core gameplay mechanics specific to [GENRE] games, including [GENRE_MECHANICS_DESCRIPTION].
+## 📋 Task Description
+Implementation of Genre Core Mechanics for the game development project. - Brief description of what this task accomplishes for the game development project.
 
-## Requirements
-- [ ] Implement [GENRE_MECHANIC_1]
-- [ ] Implement [GENRE_MECHANIC_2]
-- [ ] Implement [GENRE_MECHANIC_3]
-- [ ] Implement [GENRE_MECHANIC_4]
-- [ ] Implement [GENRE_MECHANIC_5]
-- [ ] Balance [GENRE_MECHANICS]
+## 🎯 Requirements
+- [ ] [TASK_SPECIFIC_REQ_1] - Define specific requirement for this task
+- [ ] [TASK_SPECIFIC_REQ_2] - Implement specific functionality
+- [ ] [TASK_SPECIFIC_REQ_3] - Configure specific settings
+- [ ] [TASK_SPECIFIC_REQ_4] - Test specific features
+- [ ] [TASK_SPECIFIC_REQ_5] - Document specific implementation
 
-## Implementation Steps
+## 📊 Phase Breakdown
+| Phase | File | Status | Time | Progress | Started | Completed |
+|-------|------|--------|------|----------|---------|-----------|
+| 1 | [Phase 1](./01-genre-core-mechanics-phase-1.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
+| 2 | [Phase 2](./01-genre-core-mechanics-phase-2.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
+| 3 | [Phase 3](./01-genre-core-mechanics-phase-3.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
+| 4 | [Phase 4](./01-genre-core-mechanics-phase-4.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
 
-### Phase 1: [GENRE] Foundation
-1. [GENRE_STEP_1_1]
-2. [GENRE_STEP_1_2]
-3. [GENRE_STEP_1_3]
+**Status Legend**: 🟢 Planning | 🟡 In Progress | 🔴 Blocked | ✅ Completed
 
-### Phase 2: [GENRE] Core Systems
-1. [GENRE_STEP_2_1]
-2. [GENRE_STEP_2_2]
-3. [GENRE_STEP_2_3]
+## ✅ Success Criteria
+- [ ] [TASK_SPECIFIC_CRITERIA_1] - Specific measurable outcome
+- [ ] [TASK_SPECIFIC_CRITERIA_2] - Specific functionality working
+- [ ] [TASK_SPECIFIC_CRITERIA_3] - Specific performance target met
+- [ ] [TASK_SPECIFIC_CRITERIA_4] - Specific integration successful
+- [ ] [TASK_SPECIFIC_CRITERIA_5] - Specific documentation complete
 
-### Phase 3: [GENRE] Advanced Features
-1. [GENRE_STEP_3_1]
-2. [GENRE_STEP_3_2]
-3. [GENRE_STEP_3_3]
+## 📁 Files to Create/Modify
+### Directories
+- `[TASK_SPECIFIC_FILE_1] - Specific file for this task/` (purpose)
+- `[TASK_SPECIFIC_FILE_2] - Specific configuration file/` (purpose)
+- `[TASK_SPECIFIC_FILE_3] - Specific documentation file/` (purpose)
 
-### Phase 4: [GENRE] Polish & Balance
-1. [GENRE_STEP_4_1]
-2. [GENRE_STEP_4_2]
-3. [GENRE_STEP_4_3]
+### Files
+- `[TASK_SPECIFIC_FILE_1] - Specific file for this task` (purpose)
+- `[TASK_SPECIFIC_FILE_2] - Specific configuration file` (purpose)
+- `[TASK_SPECIFIC_FILE_3] - Specific documentation file` (purpose)
 
-## Success Criteria
-- [ ] [GENRE] mechanics are fully functional
-- [ ] [GENRE] systems are balanced
-- [ ] [GENRE] features are integrated with core engine
-- [ ] [GENRE] mechanics are performant
-- [ ] [GENRE] systems are extensible
+## 🛠️ Technology Considerations
+- **Game Engine**: [GAME_ENGINE] (version: [VERSION])
+- **Framework**: [FRAMEWORK] (version: [VERSION])
+- **Library**: [LIBRARY] (version: [VERSION])
+- **Tools**: [TOOLS] (version: [VERSION])
+- **Platform**: [PLATFORM] (e.g., PC, Mobile, Console, Web)
 
-## Files to Create/Modify
-- `src/game/[GENRE_LOWER]/[GENRE_MECHANICS_FILE_1]`
-- `src/game/[GENRE_LOWER]/[GENRE_MECHANICS_FILE_2]`
-- `src/game/[GENRE_LOWER]/[GENRE_MECHANICS_FILE_3]`
-- `config/[GENRE_LOWER]-mechanics.json`
-- `docs/[GENRE_LOWER]-mechanics.md`
+## 🎨 Game-Specific Considerations
+- **Art Style**: [ART_STYLE] (e.g., Pixel Art, 3D Realistic, Cartoon, Minimalist)
+- **Performance Target**: [PERFORMANCE] (e.g., 60 FPS, 30 FPS, Variable)
+- **Target Platform**: [TARGET_PLATFORM] (e.g., Windows, macOS, Linux, Android, iOS)
+- **Multiplayer**: [MULTIPLAYER] (Yes/No - Local/Online)
+- **Save System**: [SAVE_SYSTEM] (e.g., Local, Cloud, Both)
 
-## Technology Considerations
-- **Framework**: [GAME_ENGINE]
-- **Library**: [GENRE_SPECIFIC_LIBRARY]
-- **Tools**: [GENRE_SPECIFIC_TOOLS]
+## 📝 Notes
+Additional notes specific to this task. - Additional considerations, warnings, or important information specific to this task.
 
-## Genre-Specific Examples
-
-### For Fighting Games:
-- Combo system implementation
-- Hit detection and damage calculation
-- Special move mechanics
-- Block and counter systems
-
-### For RPGs:
-- Turn-based combat system
-- Character progression mechanics
-- Quest and dialogue systems
-- Inventory and equipment management
-
-### For Strategy Games:
-- Resource management systems
-- Unit control and AI
-- Map and territory mechanics
-- Victory condition systems
-
-## Notes
-[GENRE] mechanics should be designed with scalability in mind. Consider future expansions and modding support. Balance is crucial for [GENRE] games.
+## 🔗 Related Tasks
+- **Dependencies**: None
+- **Dependents**: None
+- **Related**: None
 
 ---
-*Template: [GENRE] Specific* 
+*Template: Game Development Task - Genre Specific* 

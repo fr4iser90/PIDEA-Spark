@@ -6,9 +6,9 @@ Create comprehensive implementation files for development tasks with detailed sp
 
 > **File Pattern Requirement:**  
 > All Index, Implementation and Phase files must always be created using this pattern:  
-> - **Index**: pidea-spark-output/tasks/[category]/[name]/[name]-index.md  
-> - **Implementation**: pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md  
-> - **Phase**: pidea-spark-output/tasks/[category]/[name]/[name]-phase-[number].md  
+> - **Index**: pidea-spark-output/tasks/[category]/[name]/index.md  
+> - **Implementation**: pidea-spark-output/tasks/[category]/[name]/implementation.md  
+> - **Phase**: pidea-spark-output/tasks/[category]/[name]/phase-[number].md  
 > If ANY file is missing, it MUST be created automatically. This pattern is required for orchestration and grouping in the system.
 
 ## Task Information
@@ -20,7 +20,7 @@ Create comprehensive implementation files for development tasks with detailed sp
 
 ## Required File Creation
 
-### 1. Index File: pidea-spark-output/tasks/[category]/[name]/[name]-index.md
+### 1. Index File: pidea-spark-output/tasks/[category]/[name]/index.md
 Create a master index file with:
 - Task overview and metadata
 - File structure documentation
@@ -29,7 +29,7 @@ Create a master index file with:
 - Related tasks and dependencies
 - Quick action links
 
-### 2. Implementation File: pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md
+### 2. Implementation File: pidea-spark-output/tasks/[category]/[name]/implementation.md
 Create comprehensive implementation plan with:
 - Project overview and technical requirements
 - File impact analysis (modify/create/delete)
@@ -42,7 +42,7 @@ Create comprehensive implementation plan with:
 - Deployment checklist
 - Success criteria
 
-### 3. Phase Files: pidea-spark-output/tasks/[category]/[name]/[name]-phase-[number].md
+### 3. Phase Files: pidea-spark-output/tasks/[category]/[name]/phase-[number].md
 Create individual phase files for:
 - Phase 1: Foundation Setup
 - Phase 2: Core Implementation  
@@ -63,13 +63,13 @@ Each phase file must include:
 ### Hierarchical Organization
 \`\`\`
 pidea-spark-output/tasks/[category]/[name]/
-├── [name]-index.md (Master index)
-├── [name]-implementation.md (Complete implementation plan)
-├── [name]-phase-1.md (Foundation Setup)
-├── [name]-phase-2.md (Core Implementation)
-├── [name]-phase-3.md (Integration & Testing)
-├── [name]-phase-4.md (Documentation & Validation)
-└── [name]-phase-5.md (Deployment Preparation)
+├── index.md (Master index)
+├── implementation.md (Complete implementation plan)
+├── phase-1.md (Foundation Setup)
+├── phase-2.md (Core Implementation)
+├── phase-3.md (Integration & Testing)
+├── phase-4.md (Documentation & Validation)
+└── phase-5.md (Deployment Preparation)
 \`\`\`
 
 ### Naming Conventions

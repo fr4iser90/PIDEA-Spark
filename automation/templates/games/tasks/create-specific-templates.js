@@ -633,9 +633,9 @@ function createTaskFiles(category, taskDir, taskId) {
   }
 
   // Check if files already exist
-  const indexFile = path.join(taskPath, `${taskDir}-index.md`);
-  const implementationFile = path.join(taskPath, `${taskDir}-implementation.md`);
-  const phaseFile = path.join(taskPath, `${taskDir}-phase-1.md`);
+  const indexFile = path.join(taskPath, `${taskDir}/${taskName}-index.md`);
+  const implementationFile = path.join(taskPath, `${taskDir}/${taskName}-implementation.md`);
+  const phaseFile = path.join(taskPath, `${taskDir}/${taskName}-phase-1.md`);
 
   let filesCreated = 0;
 

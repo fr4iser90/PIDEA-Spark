@@ -26,10 +26,10 @@
 ## 📊 Phase Breakdown
 | Phase | File | Status | Time | Progress | Started | Completed |
 |-------|------|--------|------|----------|---------|-----------|
-| 1 | [Phase 1](./[name]-phase-1.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
-| 2 | [Phase 2](./[name]-phase-2.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
-| 3 | [Phase 3](./[name]-phase-3.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
-| 4 | [Phase 4](./[name]-phase-4.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
+| 1 | [Phase 1](./phase-1.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
+| 2 | [Phase 2](./phase-2.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
+| 3 | [Phase 3](./phase-3.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
+| 4 | [Phase 4](./phase-4.md) | [Status] | [X]h | [X]% | [Date] | [Date] |
 
 **Status Legend**: 🟢 Planning | 🟡 In Progress | 🔴 Blocked | ✅ Completed
 

@@ -2,13 +2,13 @@ export function generateTaskReviewPrompt(task, taskDetails) {
     return `# Task Review & Validation System
 
 ## Goal
-Review, validate, and analyze development tasks against the actual codebase. Analyze implementation files, verify code existence, identify gaps, and create phase files for task splitting when needed. **AUTOMATICALLY CREATE MISSING FILES** (index, implementation, phase files) if they don't exist. **DO NOT modify existing pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md** - only analyze and create missing files.
+Review, validate, and analyze development tasks against the actual codebase. Analyze implementation files, verify code existence, identify gaps, and create phase files for task splitting when needed. **AUTOMATICALLY CREATE MISSING FILES** (index, implementation, phase files) if they don't exist. **DO NOT modify existing pidea-spark-output/tasks/[category]/[name]/implementation.md** - only analyze and create missing files.
 
 > **File Pattern Requirement:**  
 > All Index, Implementation and Phase files must always be created using this pattern:  
-> - **Index**: pidea-spark-output/tasks/[category]/[name]/[name]-index.md  
-> - **Implementation**: pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md  
-> - **Phase**: pidea-spark-output/tasks/[category]/[name]/[name]-phase-[number].md  
+> - **Index**: pidea-spark-output/tasks/[category]/[name]/index.md  
+> - **Implementation**: pidea-spark-output/tasks/[category]/[name]/implementation.md  
+> - **Phase**: pidea-spark-output/tasks/[category]/[name]/phase-[number].md  
 > If ANY file is missing, it MUST be created automatically. This pattern is required for orchestration and grouping in the system.
 
 ## Task Information
@@ -31,8 +31,8 @@ ${taskDetails}
 - **Validation**: Verify each phase completion before proceeding
 
 ### Phase 0: File Structure Validation & Auto-Creation
-- [ ] **Check Index File**: Verify \`[name]-index.md\` exists, create if missing
-- [ ] **Check Implementation File**: Verify \`[name]-implementation.md\` exists, create if missing
+- [ ] **Check Index File**: Verify \`index.md\` exists, create if missing
+- [ ] **Check Implementation File**: Verify \`implementation.md\` exists, create if missing
 - [ ] **Check Phase Files**: Verify all referenced phase files exist, create missing ones
 - [ ] **Validate Directory Structure**: Ensure category/task folders exist
 - [ ] **Extract Task Metadata**: Parse existing files for task name, category, priority
@@ -80,9 +80,9 @@ ${taskDetails}
 ## File Structure Validation Rules
 
 ### Required File Check
-- **Index File**: \`pidea-spark-output/tasks/[category]/[name]/[name]-index.md\` - MUST exist
-- **Implementation File**: \`pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md\` - MUST exist
-- **Phase Files**: \`pidea-spark-output/tasks/[category]/[name]/[name]-phase-[number].md\` - MUST exist for all referenced phases
+- **Index File**: \`pidea-spark-output/tasks/[category]/[name]/index.md\` - MUST exist
+- **Implementation File**: \`pidea-spark-output/tasks/[category]/[name]/implementation.md\` - MUST exist
+- **Phase Files**: \`pidea-spark-output/tasks/[category]/[name]/phase-[number].md\` - MUST exist for all referenced phases
 - **Directory Structure**: Category and task folders MUST exist
 
 ### Auto-Creation Process
@@ -110,22 +110,22 @@ ${taskDetails}
 ## 📁 File Structure
 \`\`\`
 pidea-spark-output/tasks/[category]/[name]/
-├── [name]-index.md (this file)
-├── [name]-implementation.md
-├── [name]-phase-1.md
-├── [name]-phase-2.md
-└── [name]-phase-3.md
+├── index.md (this file)
+├── implementation.md
+├── phase-1.md
+├── phase-2.md
+└── phase-3.md
 \`\`\`
 
 ## 🎯 Main Implementation
-- **[Task Name Implementation](./[name]-implementation.md)** - Complete implementation plan and specifications
+- **[Task Name Implementation](./implementation.md)** - Complete implementation plan and specifications
 
 ## 📊 Phase Breakdown
 | Phase | File | Status | Time | Progress |
 |-------|------|--------|------|----------|
-| 1 | [Phase 1](./[name]-phase-1.md) | [Status] | [X]h | [X]% |
-| 2 | [Phase 2](./[name]-phase-2.md) | [Status] | [X]h | [X]% |
-| 3 | [Phase 3](./[name]-phase-3.md) | [Status] | [X]h | [X]% |
+| 1 | [Phase 1](./phase-1.md) | [Status] | [X]h | [X]% |
+| 2 | [Phase 2](./phase-2.md) | [Status] | [X]h | [X]% |
+| 3 | [Phase 3](./phase-3.md) | [Status] | [X]h | [X]% |
 
 ## 🔄 Subtask Management
 ### Active Subtasks
@@ -155,8 +155,8 @@ pidea-spark-output/tasks/[category]/[name]/
 - [Progress made]
 
 ## 🚀 Quick Actions
-- [View Implementation Plan](./[name]-implementation.md)
-- [Start Phase 1](./[name]-phase-1.md)
+- [View Implementation Plan](./implementation.md)
+- [Start Phase 1](./phase-1.md)
 - [Review Progress](#progress-tracking)
 - [Update Status](#notes--updates)
 \`\`\`
@@ -320,14 +320,14 @@ pidea-spark-output/tasks/[category]/[name]/
 ## File Structure Validation - [Date]
 
 ### ✅ Existing Files
-- [x] Index: \`pidea-spark-output/tasks/[category]/[name]/[name]-index.md\` - Status: Found
-- [x] Implementation: \`pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md\` - Status: Found
-- [x] Phase 1: \`pidea-spark-output/tasks/[category]/[name]/[name]-phase-1.md\` - Status: Found
+- [x] Index: \`pidea-spark-output/tasks/[category]/[name]/index.md\` - Status: Found
+- [x] Implementation: \`pidea-spark-output/tasks/[category]/[name]/implementation.md\` - Status: Found
+- [x] Phase 1: \`pidea-spark-output/tasks/[category]/[name]/phase-1.md\` - Status: Found
 
 ### ⚠️ Missing Files (Auto-Created)
-- [ ] Index: \`pidea-spark-output/tasks/[category]/[name]/[name]-index.md\` - Status: Created with template
-- [ ] Implementation: \`pidea-spark-output/tasks/[category]/[name]/[name]-implementation.md\` - Status: Created with template
-- [ ] Phase 2: \`pidea-spark-output/tasks/[category]/[name]/[name]-phase-2.md\` - Status: Created with template
+- [ ] Index: \`pidea-spark-output/tasks/[category]/[name]/index.md\` - Status: Created with template
+- [ ] Implementation: \`pidea-spark-output/tasks/[category]/[name]/implementation.md\` - Status: Created with template
+- [ ] Phase 2: \`pidea-spark-output/tasks/[category]/[name]/phase-2.md\` - Status: Created with template
 
 ### 🔧 Directory Structure
 - [x] Category folder: \`pidea-spark-output/tasks/[category]/\` - Status: Exists
@@ -586,7 +586,7 @@ When a task needs to be split into subtasks, create individual phase files follo
 
 **File Path Pattern:**
 \`\`\`
-pidea-spark-output/tasks/[category]/[name]/[name]-phase-[number].md
+pidea-spark-output/tasks/[category]/[name]/phase-[number].md
 \`\`\`
 
 **Example:**

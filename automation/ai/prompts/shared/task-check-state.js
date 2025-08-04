@@ -3,6 +3,9 @@
  * Provides functions for checking and updating task states
  */
 
+import fs from 'fs';
+import path from 'path';
+
 /**
  * Task state enumeration
  */
@@ -56,7 +59,7 @@ export function checkTaskState(taskPath) {
  */
 export function checkTaskFiles(taskPath) {
     const requiredFiles = [
-        'index.md',
+        'index.md ',
         'implementation.md',
         'phase-1.md',
         'phase-2.md',
@@ -68,21 +71,77 @@ export function checkTaskFiles(taskPath) {
         requiredFiles,
         existingFiles: [],
         missingFiles: [],
-        allFilesExist: false
+        filesWithPlaceholders: [],
+        allFilesExist: false,
+        allFilesComplete: false
     };
 
-    // Mock implementation - in real usage, this would check actual files
+    // Check each required file
     requiredFiles.forEach(file => {
-        const exists = Math.random() > 0.3; // Mock random existence
-        if (exists) {
+        const filePath = path.join(taskPath, file);
+        
+        if (fs.existsSync(filePath)) {
             results.existingFiles.push(file);
+            
+            // Check if file has placeholders
+            const content = fs.readFileSync(filePath, 'utf8');
+            const hasPlaceholders = checkForPlaceholders(content);
+            
+            if (hasPlaceholders) {
+                results.filesWithPlaceholders.push(file);
+            }
         } else {
             results.missingFiles.push(file);
         }
     });
 
     results.allFilesExist = results.missingFiles.length === 0;
+    results.allFilesComplete = results.filesWithPlaceholders.length === 0;
+    
     return results;
+}
+
+function checkForPlaceholders(content) {
+    const placeholderPatterns = [
+        /\[GAME_ENGINE\]/g,
+        /\[GAME_GENRE\]/g,
+        /\[GIT_BRANCH_STRATEGY\]/g,
+        /\[GIT_WORKFLOW\]/g,
+        /\[GIT_HOOKS\]/g,
+        /\[GIT_PERMISSIONS\]/g,
+        /\[GIT_INTEGRATION\]/g,
+        /\[REPOSITORY_STRUCTURE\]/g,
+        /\[BRANCH_PROTECTION\]/g,
+        /\[COMMIT_STANDARDS\]/g,
+        /\[HOOKS_WORKING\]/g,
+        /\[CI_INTEGRATION\]/g,
+        /\[GITIGNORE_FILE\]/g,
+        /\[GIT_HOOKS_DIR\]/g,
+        /\[BRANCH_CONFIG\]/g,
+        /\[VERSION\]/g,
+        /\[FRAMEWORK\]/g,
+        /\[LIBRARY\]/g,
+        /\[TOOLS\]/g,
+        /\[PLATFORM\]/g,
+        /\[ART_STYLE\]/g,
+        /\[PERFORMANCE\]/g,
+        /\[TARGET_PLATFORM\]/g,
+        /\[MULTIPLAYER\]/g,
+        /\[SAVE_SYSTEM\]/g,
+        /\[Status\]/g,
+        /\[X\]h/g,
+        /\[X\]%/g,
+        /\[Date\]/g,
+        /To be filled/i,
+        /\[TO BE FILLED\]/i,
+        /placeholder/i,
+        /\[PLACEHOLDER\]/i,
+        /TODO/i,
+        /FIXME/i,
+        /TBD/i
+    ];
+    
+    return placeholderPatterns.some(pattern => pattern.test(content));
 }
 
 /**
@@ -136,6 +195,7 @@ export function checkTaskReadiness(task) {
     const dependencyCheck = checkTaskDependencies(task);
     
     const isReady = fileCheck.allFilesExist && 
+                   fileCheck.allFilesComplete &&
                    dependencyCheck.allSatisfied && 
                    task.state === TASK_STATES.READY;
 
@@ -146,6 +206,7 @@ export function checkTaskReadiness(task) {
         dependencyCheck,
         blockers: [
             ...fileCheck.missingFiles.map(file => `Missing file: ${file}`),
+            ...fileCheck.filesWithPlaceholders.map(file => `File has placeholders: ${file}`),
             ...dependencyCheck.unsatisfied.map(dep => `Unsatisfied dependency: ${dep}`)
         ].filter(blocker => blocker)
     };
@@ -375,6 +436,7 @@ export function generateTaskStatusReport(task) {
 ## Readiness Check
 - **Ready to Start**: ${readinessCheck.isReady ? '✅ Yes' : '❌ No'}
 - **Missing Files**: ${readinessCheck.fileCheck.missingFiles.length}
+- **Files with Placeholders**: ${readinessCheck.fileCheck.filesWithPlaceholders.length}
 - **Unsatisfied Dependencies**: ${readinessCheck.dependencyCheck.unsatisfied.length}
 
 ## Validation Status
@@ -427,5 +489,60 @@ export default {
     checkTaskValidation,
     updateTaskState,
     updatePhaseState,
-    generateTaskStatusReport
+    generateTaskStatusReport,
+    scanAllTasks
 };
+
+// NEW: Scan all tasks and show completion status
+export function scanAllTasks(tasksDir) {
+    if (!fs.existsSync(tasksDir)) {
+        return {
+            totalTasks: 0,
+            completedTasks: 0,
+            tasksWithPlaceholders: 0,
+            percentage: 0,
+            incompleteTasks: []
+        };
+    }
+
+    let totalTasks = 0;
+    let completedTasks = 0;
+    let tasksWithPlaceholders = 0;
+    const incompleteTasks = [];
+
+    // Scan all task directories
+    const categories = fs.readdirSync(tasksDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
+
+    for (const category of categories) {
+        const categoryPath = path.join(tasksDir, category);
+        const taskDirs = fs.readdirSync(categoryPath, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name);
+
+        for (const taskDir of taskDirs) {
+            totalTasks++;
+            const taskPath = path.join(categoryPath, taskDir);
+            
+            const fileCheck = checkTaskFiles(taskPath);
+            
+            if (fileCheck.allFilesComplete) {
+                completedTasks++;
+            } else {
+                tasksWithPlaceholders++;
+                incompleteTasks.push(`${category}/${taskDir}`);
+            }
+        }
+    }
+
+    const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    return {
+        totalTasks,
+        completedTasks,
+        tasksWithPlaceholders,
+        percentage,
+        incompleteTasks
+    };
+}
