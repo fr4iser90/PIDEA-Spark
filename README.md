@@ -413,7 +413,6 @@ nano automation/ide/start_ide_example.sh
 ## 🎉 Success Metrics
 
 The system considers a task successful when:
-- ✅ AI responds with proper JSON format
 - ✅ `status` is "completed"
 - ✅ `validation_passed` is `true`
 - ✅ Files are listed as created/modified
