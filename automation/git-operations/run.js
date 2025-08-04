@@ -110,18 +110,18 @@ export class GitOperationsManager {
                 cwd: this.workspacePath, 
                 encoding: 'utf8' 
             }).split('\n')
-              .map(line => line.trim())
-              .filter(line => line)
-              .map(line => line.replace(/^\*?\s*/, ''));
+          .map(line => line.trim())
+          .filter(line => line)
+          .map(line => line.replace(/^\*?\s*/, ''));
 
             const remoteBranches = execSync('git branch -r', { 
                 cwd: this.workspacePath, 
                 encoding: 'utf8' 
             }).split('\n')
-              .map(line => line.trim())
-              .filter(line => line.startsWith('origin/'))
-              .filter(line => !line.includes('HEAD ->'))
-              .map(line => line.replace(/^origin\//, ''));
+          .map(line => line.trim())
+          .filter(line => line.startsWith('origin/'))
+          .filter(line => !line.includes('HEAD ->'))
+          .map(line => line.replace(/^origin\//, ''));
 
             return {
                 local: localBranches,
@@ -266,7 +266,7 @@ export class GitOperationsManager {
             
             this.log(`✅ Switched to branch: ${branchName}`);
             return { success: true };
-        } catch (error) {
+    } catch (error) {
             return { error: error.message };
         }
     }
@@ -288,7 +288,7 @@ export class GitOperationsManager {
         const lastCommit = await this.getLastCommit();
         const remotes = await this.getRemotes();
 
-        return {
+      return {
             workspacePath: this.workspacePath,
             isGitRepo: status.isGitRepo,
             status,

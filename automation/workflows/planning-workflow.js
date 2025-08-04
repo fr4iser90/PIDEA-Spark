@@ -189,12 +189,12 @@ export class PlanningWorkflow {
 
     loadTemplateStructure(templatePath) {
         const structure = [];
-        const categories = fs.readdirSync(templatePath + '/task');
+        const categories = fs.readdirSync(templatePath + '/tasks');
         
         for (const category of categories) {
             if (category.startsWith('.')) continue;
             
-            const categoryPath = path.join(templatePath, 'task', category);
+            const categoryPath = path.join(templatePath, 'tasks', category);
             const categoryName = category.split('-').slice(1).join(' ');
             const tasks = [];
             
@@ -318,11 +318,16 @@ export class PlanningWorkflow {
 
     async createProjectStructure(projectName) {
         const defaultName = this.gameConfig?.gameType?.toLowerCase().replace(/\s+/g, '-') || 'game';
-        this.projectPath = projectName || `game-${defaultName}`;
         
-        // Ensure the path is in pidea-spark-output directory
-        if (!this.projectPath.startsWith('pidea-spark-output/')) {
-            this.projectPath = path.join('pidea-spark-output', this.projectPath);
+        // Check if we have workspace detection from the main workflow
+        if (this.config.workspacePath) {
+            // Use the detected Cursor workspace - create directly in pidea-spark-output
+            this.projectPath = path.join(this.config.workspacePath, 'pidea-spark-output');
+            this.log(`🎯 Using Cursor workspace: ${this.config.workspacePath}`);
+        } else {
+            // Fallback to local directory - create directly in pidea-spark-output
+            this.projectPath = 'pidea-spark-output';
+            this.log(`⚠️ Using local directory (Cursor workspace not detected)`);
         }
         
         this.log(`📁 Creating project structure: ${this.projectPath}`);
@@ -332,23 +337,158 @@ export class PlanningWorkflow {
             fs.mkdirSync(this.projectPath, { recursive: true });
         }
         
-        // Create task directory structure
+        // Copy complete template structure
+        await this.copyTemplateStructure();
+        
+        this.log('✅ Project structure created with complete template');
+    }
+
+    async copyTemplateStructure() {
+        this.log('📋 Copying complete template structure...');
+        
+        const templateBasePath = path.join(__dirname, '../templates/games');
+        
+        if (!fs.existsSync(templateBasePath)) {
+            this.log('⚠️ Template directory not found, creating basic structure', 'WARNING');
+            await this.createBasicStructure();
+            return;
+        }
+        
+        // Copy system files
+        const systemTemplatePath = path.join(templateBasePath, 'system');
+        const systemProjectPath = path.join(this.projectPath, 'system');
+        
+        if (fs.existsSync(systemTemplatePath)) {
+            fs.mkdirSync(systemProjectPath, { recursive: true });
+            await this.copyDirectory(systemTemplatePath, systemProjectPath);
+            this.log('✅ System files copied');
+        }
+        
+        // Copy task structure
+        const taskTemplatePath = path.join(templateBasePath, 'tasks');
+        const taskProjectPath = path.join(this.projectPath, 'tasks');
+        
+        if (fs.existsSync(taskTemplatePath)) {
+            fs.mkdirSync(taskProjectPath, { recursive: true });
+            await this.copyDirectory(taskTemplatePath, taskProjectPath);
+            this.log('✅ Task structure copied');
+        }
+        
+        // Copy other template directories
+        const otherDirs = ['docs', 'mermaid', 'assets', 'config'];
+        for (const dir of otherDirs) {
+            const templateDirPath = path.join(templateBasePath, dir);
+            const projectDirPath = path.join(this.projectPath, dir);
+            
+            if (fs.existsSync(templateDirPath)) {
+                fs.mkdirSync(projectDirPath, { recursive: true });
+                await this.copyDirectory(templateDirPath, projectDirPath);
+                this.log(`✅ ${dir} directory copied`);
+            }
+        }
+        
+        // Copy README and other root files
+        const rootFiles = ['README.md', 'package.json', 'tsconfig.json', '.gitignore'];
+        for (const file of rootFiles) {
+            const templateFilePath = path.join(templateBasePath, file);
+            const projectFilePath = path.join(this.projectPath, file);
+            
+            if (fs.existsSync(templateFilePath)) {
+                fs.copyFileSync(templateFilePath, projectFilePath);
+                this.log(`✅ ${file} copied`);
+            }
+        }
+    }
+
+    async copyDirectory(src, dest) {
+        const entries = fs.readdirSync(src, { withFileTypes: true });
+        
+        for (const entry of entries) {
+            const srcPath = path.join(src, entry.name);
+            const destPath = path.join(dest, entry.name);
+            
+            if (entry.isDirectory()) {
+                fs.mkdirSync(destPath, { recursive: true });
+                await this.copyDirectory(srcPath, destPath);
+            } else {
+                fs.copyFileSync(srcPath, destPath);
+            }
+        }
+    }
+
+    async createBasicStructure() {
+        // Create basic directories if template doesn't exist
+        const dirs = ['system', 'tasks', 'docs', 'mermaid'];
+        for (const dir of dirs) {
+            const dirPath = path.join(this.projectPath, dir);
+            fs.mkdirSync(dirPath, { recursive: true });
+        }
+        
+        // Create basic task structure
+        const taskStructure = {
+            '01-project-setup': [
+                '01-git-repository-branching',
+                '02-project-structure-creation',
+                '03-linter-formatter-config',
+                '04-build-system-setup',
+                '05-package-management'
+            ],
+            '02-core-engine': [
+                '01-game-loop-basis',
+                '02-entity-component-system',
+                '03-physics-engine',
+                '04-input-handling',
+                '05-rendering-pipeline'
+            ],
+            '03-frontend-ui': [
+                '01-ui-framework-setup',
+                '02-main-menu',
+                '03-hud-implementation',
+                '04-settings-menu',
+                '05-inventory-ui'
+            ]
+        };
+        
         const taskPath = path.join(this.projectPath, 'tasks');
-        fs.mkdirSync(taskPath, { recursive: true });
+        for (const [category, tasks] of Object.entries(taskStructure)) {
+            const categoryPath = path.join(taskPath, category);
+            fs.mkdirSync(categoryPath, { recursive: true });
+            
+            for (const task of tasks) {
+                const taskDirPath = path.join(categoryPath, task);
+                fs.mkdirSync(taskDirPath, { recursive: true });
+                
+                // Create basic task files
+                const indexContent = `# ${task.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+
+## Task Overview
+- **Category**: ${category}
+- **Task**: ${task}
+- **Status**: 📋 Ready
+- **Progress**: 0%
+
+## Description
+Basic task template - to be customized.
+
+## Files
+- **index.md** - This file
+- **implementation.md** - Implementation plan
+- **phase-1.md** - Foundation phase
+- **phase-2.md** - Core phase  
+- **phase-3.md** - Integration phase
+
+---
+*Generated by Planning Workflow*`;
+                
+                fs.writeFileSync(path.join(taskDirPath, 'index.md'), indexContent);
+                fs.writeFileSync(path.join(taskDirPath, 'implementation.md'), `# Implementation Plan\n\nTo be filled.`);
+                fs.writeFileSync(path.join(taskDirPath, 'phase-1.md'), `# Phase 1: Foundation\n\nTo be filled.`);
+                fs.writeFileSync(path.join(taskDirPath, 'phase-2.md'), `# Phase 2: Core\n\nTo be filled.`);
+                fs.writeFileSync(path.join(taskDirPath, 'phase-3.md'), `# Phase 3: Integration\n\nTo be filled.`);
+            }
+        }
         
-        // Create system directory
-        const systemPath = path.join(this.projectPath, 'system');
-        fs.mkdirSync(systemPath, { recursive: true });
-        
-        // Create docs directory
-        const docsPath = path.join(this.projectPath, 'docs');
-        fs.mkdirSync(docsPath, { recursive: true });
-        
-        // Create mermaid directory
-        const mermaidPath = path.join(this.projectPath, 'mermaid');
-        fs.mkdirSync(mermaidPath, { recursive: true });
-        
-        this.log('✅ Project structure created');
+        this.log('✅ Basic structure created');
     }
 
     async generateOrchestrator() {
@@ -746,48 +886,91 @@ ${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') 
     }
 
     async createTaskFiles() {
-        this.log('📝 Creating individual task files...');
+        this.log('📝 Updating task files in template structure...');
         
         // Generate tasks based on AI analysis
         const tasks = this.generateTasksFromAnalysis();
         
-        // Create tasks directory
+        // Use the copied task directory structure
         const tasksDir = path.join(this.projectPath, 'tasks');
-        fs.mkdirSync(tasksDir, { recursive: true });
         
+        if (!fs.existsSync(tasksDir)) {
+            this.log('⚠️ Task directory not found, creating basic structure', 'WARNING');
+            fs.mkdirSync(tasksDir, { recursive: true });
+        }
+        
+        // Update existing task files with generated content
         for (let i = 0; i < tasks.length; i++) {
             const task = tasks[i];
             const taskId = i + 1;
             
-            await this.createTaskFilesForTask(task, taskId, tasksDir);
+            await this.updateTaskFilesInTemplate(task, taskId, tasksDir);
         }
         
-        this.log(`✅ Created ${tasks.length} task files`);
+        this.log(`✅ Updated ${tasks.length} task files in template structure`);
     }
 
-    async createTaskFilesForTask(task, taskId, tasksDir) {
-        const taskDir = path.join(tasksDir, `${taskId.toString().padStart(2, '0')}-${task.name.toLowerCase().replace(/\s+/g, '-')}`);
-        fs.mkdirSync(taskDir, { recursive: true });
+    async updateTaskFilesInTemplate(task, taskId, tasksDir) {
+        // Find the appropriate task directory in the template structure
+        const taskDir = await this.findTaskDirectory(task, taskId, tasksDir);
         
-        // Create task files
-        await this.createTaskIndex(task, taskId, taskDir);
-        await this.createTaskImplementation(task, taskId, taskDir);
-        await this.createTaskPhases(task, taskId, taskDir);
+        if (taskDir) {
+            // Update existing task files
+            await this.updateTaskIndex(task, taskId, taskDir);
+            await this.updateTaskImplementation(task, taskId, taskDir);
+            await this.updateTaskPhases(task, taskId, taskDir);
+        } else {
+            // Create new task directory if not found in template
+            await this.createTaskFilesForTask(task, taskId, tasksDir);
+        }
     }
 
-    async createTaskIndex(task, taskId, taskDir) {
-        const indexContent = `# Task ${taskId}: ${task.name}
+    async findTaskDirectory(task, taskId, tasksDir) {
+        // Look for existing task directories that match the task
+        const entries = fs.readdirSync(tasksDir, { withFileTypes: true });
+        
+        for (const entry of entries) {
+            if (entry.isDirectory()) {
+                const categoryPath = path.join(tasksDir, entry.name);
+                const categoryEntries = fs.readdirSync(categoryPath, { withFileTypes: true });
+                
+                for (const taskEntry of categoryEntries) {
+                    if (taskEntry.isDirectory()) {
+                        const taskPath = path.join(categoryPath, taskEntry.name);
+                        const indexPath = path.join(taskPath, 'index.md');
+                        
+                        if (fs.existsSync(indexPath)) {
+                            // Check if this task directory matches our task
+                            const indexContent = fs.readFileSync(indexPath, 'utf8');
+                            if (indexContent.includes(task.name) || taskEntry.name.includes(task.name.toLowerCase().replace(/\s+/g, '-'))) {
+                                return taskPath;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    async updateTaskIndex(task, taskId, taskDir) {
+        const indexPath = path.join(taskDir, 'index.md');
+        
+        if (fs.existsSync(indexPath)) {
+            const indexContent = `# Task ${taskId}: ${task.name}
 
 ## Task Overview
 - **Task ID**: ${taskId}
 - **Task Name**: ${task.name}
-- **Dependencies**: ${task.dependencies}
-- **Status**: ${task.status}
-- **Progress**: ${task.progress}
+- **Category**: ${task.category || 'To be determined'}
+- **Dependencies**: ${task.dependencies || '-'}
+- **Status**: ${task.status || '📋 Ready'}
+- **Progress**: ${task.progress || '0%'}
 - **Estimated Time**: ${this.estimateTaskTime(task)}h
 
 ## Task Description
-${task.notes}
+${task.notes || 'Task description to be filled based on game requirements.'}
 
 ## Requirements
 - [ ] Core functionality implementation
@@ -796,33 +979,36 @@ ${task.notes}
 - [ ] Documentation
 
 ## Files
-- **[Implementation](./${task.name.toLowerCase().replace(/\s+/g, '-')}-implementation.md)** - Complete implementation plan
-- **[Phase 1](./${task.name.toLowerCase().replace(/\s+/g, '-')}-phase-1.md)** - Foundation setup
-- **[Phase 2](./${task.name.toLowerCase().replace(/\s+/g, '-')}-phase-2.md)** - Core implementation
-- **[Phase 3](./${task.name.toLowerCase().replace(/\s+/g, '-')}-phase-3.md)** - Integration and testing
+- **[Implementation](./implementation.md)** - Complete implementation plan
+- **[Phase 1](./phase-1.md)** - Foundation setup
+- **[Phase 2](./phase-2.md)** - Core implementation
+- **[Phase 3](./phase-3.md)** - Integration and testing
 
 ---
-*Generated by Planning Workflow*`;
+*Updated by Planning Workflow*`;
 
-        const indexPath = path.join(taskDir, `${task.name.toLowerCase().replace(/\s+/g, '-')}-index.md`);
-        fs.writeFileSync(indexPath, indexContent);
+            fs.writeFileSync(indexPath, indexContent);
+        }
     }
 
-    async createTaskImplementation(task, taskId, taskDir) {
+    async updateTaskImplementation(task, taskId, taskDir) {
+        const implementationPath = path.join(taskDir, 'implementation.md');
+        
         const implementationContent = `# ${task.name} - Implementation Plan
 
 ## Task Information
 - **Task ID**: ${taskId}
-- **Dependencies**: ${task.dependencies}
+- **Category**: ${task.category || 'To be determined'}
+- **Dependencies**: ${task.dependencies || '-'}
 - **Estimated Time**: ${this.estimateTaskTime(task)}h
 
 ## Implementation Overview
-${task.notes}
+${task.notes || 'Implementation details to be filled based on game requirements.'}
 
 ## Technical Requirements
 - **Tech Stack**: [To be determined based on game requirements]
 - **Architecture**: [To be determined]
-- **Dependencies**: ${task.dependencies}
+- **Dependencies**: ${task.dependencies || '-'}
 
 ## Implementation Phases
 
@@ -845,49 +1031,67 @@ ${task.notes}
 - [ ] Functionality works as expected
 - [ ] All tests pass
 - [ ] Documentation is complete
-- [ ] Integration successful
+- [ ] Integration with other systems successful
+
+## Notes
+${task.notes || 'Additional notes and considerations for this task.'}
 
 ---
-*Generated by Planning Workflow*`;
+*Updated by Planning Workflow*`;
 
-        const implementationPath = path.join(taskDir, `${task.name.toLowerCase().replace(/\s+/g, '-')}-implementation.md`);
         fs.writeFileSync(implementationPath, implementationContent);
     }
 
-    async createTaskPhases(task, taskId, taskDir) {
+    async updateTaskPhases(task, taskId, taskDir) {
         const phases = [
-            { number: 1, name: 'Foundation Setup', description: 'Create basic structure and setup dependencies' },
-            { number: 2, name: 'Core Implementation', description: 'Implement main functionality and add error handling' },
-            { number: 3, name: 'Integration and Testing', description: 'Integrate with existing systems and perform testing' }
+            { name: 'phase-1.md', title: 'Foundation Setup', description: 'Basic structure and environment setup' },
+            { name: 'phase-2.md', title: 'Core Implementation', description: 'Main functionality implementation' },
+            { name: 'phase-3.md', title: 'Integration and Testing', description: 'Integration with other systems and testing' }
         ];
         
         for (const phase of phases) {
-            const phaseContent = `# ${task.name} - Phase ${phase.number}: ${phase.name}
+            const phasePath = path.join(taskDir, phase.name);
+            const phaseContent = `# ${task.name} - ${phase.title}
 
 ## Phase Overview
-${phase.description}
+- **Task**: ${task.name}
+- **Phase**: ${phase.title}
+- **Description**: ${phase.description}
 
-## Tasks
-- [ ] Task 1
-- [ ] Task 2
-- [ ] Task 3
+## Objectives
+- [ ] Objective 1
+- [ ] Objective 2
+- [ ] Objective 3
 
-## Deliverables
-- [ ] Deliverable 1
-- [ ] Deliverable 2
-- [ ] Deliverable 3
+## Implementation Steps
+1. Step 1
+2. Step 2
+3. Step 3
 
 ## Success Criteria
-- [ ] All tasks completed
-- [ ] All deliverables ready
-- [ ] Phase validated
+- [ ] All objectives completed
+- [ ] Tests passing
+- [ ] Documentation updated
+
+## Notes
+${task.notes || 'Phase-specific notes and considerations.'}
 
 ---
-*Generated by Planning Workflow*`;
+*Updated by Planning Workflow*`;
 
-            const phasePath = path.join(taskDir, `${task.name.toLowerCase().replace(/\s+/g, '-')}-phase-${phase.number}.md`);
             fs.writeFileSync(phasePath, phaseContent);
         }
+    }
+
+    async createTaskFilesForTask(task, taskId, tasksDir) {
+        // Create new task directory if not found in template
+        const taskDir = path.join(tasksDir, `${taskId.toString().padStart(2, '0')}-${task.name.toLowerCase().replace(/\s+/g, '-')}`);
+        fs.mkdirSync(taskDir, { recursive: true });
+        
+        // Create task files
+        await this.updateTaskIndex(task, taskId, taskDir);
+        await this.updateTaskImplementation(task, taskId, taskDir);
+        await this.updateTaskPhases(task, taskId, taskDir);
     }
 
     async validateProjectStructure() {

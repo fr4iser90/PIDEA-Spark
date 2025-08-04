@@ -18,8 +18,8 @@ export class TemplateManager {
     constructor(config, log) {
         this.config = config;
         this.log = log;
-        this.templateDir = config.templateDir || 'docs/template/games/template';
-        this.gamesDir = config.gamesDir || 'docs/games';
+        this.templateDir = config.templateDir;
+        this.gamesDir = config.gamesDir;
         this.workspacePath = null;
         this.outputDir = 'pidea-spark-output';
     }

@@ -303,6 +303,9 @@ class CDPTaskAutomationWorkflow {
             // Initialize with workspace detection
             await projectDetector.initialize();
             
+            // Get workspace info early
+            const workspaceInfo = projectDetector.getWorkspaceInfo();
+            
             // Create project structure
             const projectPath = await projectDetector.createProjectStructure(projectName);
             
@@ -331,7 +334,8 @@ class CDPTaskAutomationWorkflow {
                 templateDir: 'automation/templates',
                 projectPath: projectPath,
                 orchestratorFile: orchestratorPath,
-                progressFile: path.join(projectPath, 'system', 'progress-tracker.md')
+                progressFile: path.join(projectPath, 'system', 'progress-tracker.md'),
+                workspacePath: workspaceInfo.workspacePath // Pass workspace path to PlanningWorkflow
             };
             
             // Create new PlanningWorkflow instance
@@ -342,9 +346,6 @@ class CDPTaskAutomationWorkflow {
             
             // Execute planning workflow with idea content
             await planningWorkflow.executePlanningWorkflow(idea.content, projectName);
-            
-            // Get workspace info for user feedback
-            const workspaceInfo = projectDetector.getWorkspaceInfo();
             
             console.log(`✅ Idea "${idea.name}" converted to project "${projectName}" successfully!`);
             console.log(`📁 Project location: ${projectPath}`);
@@ -498,6 +499,9 @@ class CDPTaskAutomationWorkflow {
             // Initialize with workspace detection
             await projectDetector.initialize();
             
+            // Get workspace info early
+            const workspaceInfo = projectDetector.getWorkspaceInfo();
+            
             // Generate project name if not provided
             if (!projectName) {
                 projectName = this.generateProjectName(gameIdea);
@@ -514,7 +518,8 @@ class CDPTaskAutomationWorkflow {
                 templateDir: 'automation/templates',
                 projectPath: projectPath,
                 orchestratorFile: path.join(projectPath, 'system', 'orchestrator.md'),
-                progressFile: path.join(projectPath, 'system', 'progress-tracker.md')
+                progressFile: path.join(projectPath, 'system', 'progress-tracker.md'),
+                workspacePath: workspaceInfo.workspacePath // Pass workspace path to PlanningWorkflow
             };
             
             // Create new PlanningWorkflow instance
@@ -525,9 +530,6 @@ class CDPTaskAutomationWorkflow {
             
             // Execute planning workflow
             await planningWorkflow.executePlanningWorkflow(gameIdea, projectName);
-            
-            // Get workspace info for user feedback
-            const workspaceInfo = projectDetector.getWorkspaceInfo();
             
             console.log(`✅ Game project "${projectName}" created successfully!`);
             console.log(`📁 Project location: ${projectPath}`);
