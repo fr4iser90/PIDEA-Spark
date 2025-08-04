@@ -222,12 +222,14 @@ class CDPTaskAutomationWorkflow {
         
         // Update project paths based on workspace detection
         if (workspaceInfo.isInWorkspace) {
-            this.config.orchestratorFile = path.join(workspaceInfo.outputDir, 'system', 'orchestrator.md');
-            this.config.progressFile = path.join(workspaceInfo.outputDir, 'system', 'progress-tracker.md');
-            this.log(`🎯 Using workspace project: ${workspaceInfo.workspacePath}`);
+            // Use the specific project path, not just workspace root
+            const projectPath = choice.project.path;
+            this.config.orchestratorFile = path.join(projectPath, 'system', 'orchestrator.md');
+            this.config.progressFile = path.join(projectPath, 'system', 'progress-tracker.md');
+            this.log(`🎯 Using workspace project: ${projectPath}`);
         } else {
-            this.config.orchestratorFile = choice.project.path;
-            this.config.progressFile = choice.project.systemPath + '/progress-tracker.md';
+            this.config.orchestratorFile = path.join(choice.project.path, 'system', 'orchestrator.md');
+            this.config.progressFile = path.join(choice.project.path, 'system', 'progress-tracker.md');
             this.log(`⚠️ Using local project (workspace not found)`);
         }
         
@@ -309,6 +311,13 @@ class CDPTaskAutomationWorkflow {
             // Create project structure
             const projectPath = await projectDetector.createProjectStructure(projectName);
             
+            // Set current project so the system can find the orchestrator later
+            this.currentProject = {
+                name: projectName,
+                path: projectPath,
+                systemPath: path.join(projectPath, 'system')
+            };
+            
             // Copy idea content to the new project
             const ideaContent = fs.readFileSync(idea.path, 'utf8');
             const ideaFilePath = path.join(projectPath, 'idea-source.md');
@@ -359,6 +368,10 @@ class CDPTaskAutomationWorkflow {
         } catch (error) {
             this.log(`❌ Error converting idea to project: ${error.message}`, 'ERROR');
             console.error('Full error:', error);
+            
+            // Don't start execution workflow on planning failure
+            this.log('💡 Planning failed. Please fix the issue and try again.');
+            return;
         }
     }
 
@@ -924,6 +937,13 @@ class CDPTaskAutomationWorkflow {
             this.log(`🎯 Using Cursor workspace: ${workspaceInfo.workspacePath}`);
         } else {
             this.log(`⚠️ Using local directory (Cursor workspace not found)`);
+        }
+        
+        // If we have a current project, use its orchestrator path
+        if (this.currentProject && this.currentProject.path) {
+            this.config.orchestratorFile = path.join(this.currentProject.path, 'system', 'orchestrator.md');
+            this.config.progressFile = path.join(this.currentProject.path, 'system', 'progress-tracker.md');
+            this.log(`🎯 Using project orchestrator: ${this.config.orchestratorFile}`);
         }
         
         // Load tasks if not already loaded

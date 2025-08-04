@@ -2,7 +2,7 @@
 
 ## 🎮 Task Overview
 - **Task ID**: 02.8 (e.g., 1.2, 2.1, 3.4)
-- **AI_FLAG**: NEEDS_CUSTOMIZATION
+- **AI_FLAG**: REMOVE_THIS
 - **Category**: Core Engine (e.g., project-setup, core-engine, frontend-ui, assets-pipeline)
 - **Priority**: Medium (High/Medium/Low)
 - **Estimated Time**: 4h (e.g., 1h, 2h, 4h, 8h)

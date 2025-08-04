@@ -19,6 +19,7 @@ import { dirname } from 'path';
 // Manager Modules
 import { initializeBrowser } from '../managers/browser-manager.js';
 import { TemplateManager } from '../file-operations/template-manager.js';
+import { AIFlagDetector } from '../file-operations/detect-flag.js';
 
 // AI Modules
 import { generatePlanningPrompt, generateTaskCreationPrompt, generateGameIdeaAnalysisPrompt, generateComprehensiveTaskCreationPrompt, generateOrchestratorValidationPrompt, generateContinueTaskCreationPrompt } from '../ai/prompts.js';
@@ -42,6 +43,7 @@ export class PlanningWorkflow {
         this.page = null;
         this.sendToCursor = null;
         this.templateManager = new TemplateManager(config, log);
+        this.aiFlagDetector = new AIFlagDetector(log);
         this.gameIdea = null;
         this.gameConfig = null;
         this.customizedTasks = [];
@@ -74,17 +76,18 @@ export class PlanningWorkflow {
 
         // PHASE 5: Orchestrator Validation
         this.log('📋 PHASE 5: Validating orchestrator...');
-        await this.validateOrchestrator();
+        // Skip AI validation - orchestrator is already created from template
+        this.log('✅ Orchestrator validation skipped - using template version');
         
         // PHASE 6: AI Task Creation via CDP
         this.log('🤖 PHASE 6: Creating detailed task files via AI...');
         await this.createDetailedTaskFilesViaAI();
         
-        // PHASE 7: Task File Creation
+        // PHASE 7: Create individual task files
         this.log('📝 PHASE 7: Creating individual task files...');
-        await this.createTaskFiles();
+        // Task files are already created during template copying, no need to create them again
         
-        // PHASE 8: Final Validation
+        // PHASE 8: Final validation
         this.log('✅ PHASE 8: Final validation...');
         await this.validateProjectStructure();
         
@@ -324,15 +327,13 @@ export class PlanningWorkflow {
     async createProjectStructure(projectName) {
         const defaultName = this.gameConfig?.gameType?.toLowerCase().replace(/\s+/g, '-') || 'game';
         
-        // Check if we have workspace detection from the main workflow
-        if (this.config.workspacePath) {
-            // Use the detected Cursor workspace - create directly in pidea-spark-output
-            this.projectPath = path.join(this.config.workspacePath, 'pidea-spark-output');
-            this.log(`🎯 Using Cursor workspace: ${this.config.workspacePath}`);
+        // Use the projectPath that was already determined by the main workflow
+        if (this.config.projectPath) {
+            // Use the project path that was already created by ProjectDetector
+            this.projectPath = this.config.projectPath;
+            this.log(`🎯 Using pre-created project path: ${this.projectPath}`);
         } else {
-            // Fallback to local directory - create directly in pidea-spark-output
-            this.projectPath = 'pidea-spark-output';
-            this.log(`⚠️ Using local directory (Cursor workspace not detected)`);
+            throw new Error('No projectPath provided in config - ProjectDetector should have set this!');
         }
         
         this.log(`📁 Creating project structure: ${this.projectPath}`);
@@ -763,56 +764,45 @@ ${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') 
     }
 
     async createDetailedTaskFilesViaAI() {
-        this.log('🤖 Creating detailed task files via AI (one task at a time)...');
+        this.log('🤖 Creating detailed task files via AI (looping until all AI_FLAGS are removed)...');
         
         try {
-            // Get orchestrator path
-            const orchestratorPath = path.join(this.projectPath, 'system', 'orchestrator.md');
-            
             // Get tasks directory
             const tasksDir = path.join(this.projectPath, 'tasks');
             
-            // Find the first incomplete task
-            const incompleteTask = await this.findNextIncompleteTask(tasksDir, orchestratorPath);
+            // FIRST: Show all tasks with AI_FLAGS
+            await this.showTasksWithAIFlags(tasksDir);
             
-            if (!incompleteTask) {
-                this.log('✅ All tasks appear to be complete!');
-                return;
-            }
+            let tasksProcessed = 0;
             
-            this.log(`🎯 Working on task: ${incompleteTask.name}`);
-            
-            // Use the existing prompt from the prompts folder
-            const prompt = generateComprehensiveTaskCreationPrompt(orchestratorPath, this.gameConfig);
-            
-            this.log('📤 Sending single task creation request to AI...');
-            const response = await this.sendToAIviaCDP(prompt, { maxStableChecks: 20 });
-            
-            // Wait for file changes
-            await this.delay(3000);
-            
-            // Validate the task completion
-            const taskCompleted = await this.validateSingleTaskCompletion(incompleteTask, tasksDir);
-            
-            if (taskCompleted) {
-                this.log(`✅ Task "${incompleteTask.name}" completed successfully!`);
+            // Loop until all AI_FLAGS are removed
+            while (true) {
+                // Find the next incomplete task
+                const incompleteTask = await this.findNextIncompleteTask(tasksDir);
                 
-                // Update orchestrator with progress
-                await this.updateOrchestratorProgress(orchestratorPath, incompleteTask);
-                
-                // Check if there are more tasks to do
-                const nextIncompleteTask = await this.findNextIncompleteTask(tasksDir, orchestratorPath);
-                
-                if (nextIncompleteTask) {
-                    this.log(`🔄 ${nextIncompleteTask.name} is next - start new chat to continue`);
-                    this.log('💡 Start a new chat and run the planning workflow again to continue with the next task');
-                } else {
-                    this.log('🎉 All tasks completed!');
+                if (!incompleteTask) {
+                    this.log('✅ All AI_FLAGS removed! All tasks are complete!');
+                    break;
                 }
-            } else {
-                this.log(`⚠️ Task "${incompleteTask.name}" may need more work`, 'WARNING');
-                this.log('💡 Start a new chat to continue working on this task');
+                
+                this.log(`🎯 Working on task ${tasksProcessed + 1}: ${incompleteTask.name}`);
+                
+                // Use the existing task-create prompt from prompts folder
+                const { generateTaskCreationPrompt } = await import('../ai/prompts/shared/task-create.js');
+                const prompt = generateTaskCreationPrompt(incompleteTask, { name: incompleteTask.category });
+                
+                this.log('📤 Sending task creation request to AI...');
+                const response = await this.sendToAIviaCDP(prompt, { maxStableChecks: 20 });
+                
+                // Wait for file changes
+                await this.delay(3000);
+                
+                this.log(`✅ Task "${incompleteTask.name}" sent to AI for processing`);
+                
+                tasksProcessed++;
             }
+            
+            this.log(`🎉 Completed processing ${tasksProcessed} tasks!`);
             
         } catch (error) {
             this.log(`❌ Error creating task files: ${error.message}`, 'ERROR');
@@ -820,115 +810,30 @@ ${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') 
         }
     }
 
-    async findNextIncompleteTask(tasksDir, orchestratorPath) {
-        // Read orchestrator to get all tasks
-        const orchestratorContent = fs.readFileSync(orchestratorPath, 'utf8');
-        const taskMatches = orchestratorContent.match(/\|\s*(\d+\.\d+)\s*\|([^|]+)\|/g);
-        
-        if (!taskMatches) {
-            return null;
-        }
-        
-        // Parse tasks from orchestrator
-        const tasks = [];
-        for (const match of taskMatches) {
-            const parts = match.split('|').map(p => p.trim());
-            if (parts.length >= 3) {
-                const taskId = parts[1];
-                const taskName = parts[2];
-                const status = parts[4] || '📋 Ready';
-                
-                tasks.push({
-                    id: taskId,
-                    name: taskName,
-                    status: status
-                });
-            }
-        }
-        
-        // Check each task for completion
-        for (const task of tasks) {
-            const taskPath = await this.findTaskPath(task, tasksDir);
-            
-            if (taskPath) {
-                const isComplete = await this.isTaskComplete(taskPath);
-                if (!isComplete) {
-                    return task;
-                }
-            } else {
-                // Task directory doesn't exist - needs to be created
-                return task;
-            }
-        }
-        
-        return null;
+    async showTasksWithAIFlags(tasksDir) {
+        // Use the outsourced AIFlagDetector
+        const results = await this.aiFlagDetector.scanAllTasksForAIFlags(tasksDir);
+        this.aiFlagDetector.displayAIFlagResults(results);
     }
 
-    async findTaskPath(task, tasksDir) {
-        if (!fs.existsSync(tasksDir)) {
-            return null;
+    async findNextIncompleteTask(tasksDir) {
+        // Use the outsourced AIFlagDetector
+        return await this.aiFlagDetector.findNextIncompleteTask(tasksDir);
+    }
+
+    async getTaskAIFlag(taskPath) {
+        const indexPath = path.join(taskPath, 'index.md');
+        
+        if (fs.existsSync(indexPath)) {
+            const content = fs.readFileSync(indexPath, 'utf8');
+            return this.aiFlagDetector.getAIFlagFromContent(content);
         }
         
-        const categories = fs.readdirSync(tasksDir, { withFileTypes: true })
-            .filter(dirent => dirent.isDirectory())
-            .map(dirent => dirent.name);
-        
-        for (const category of categories) {
-            const categoryPath = path.join(tasksDir, category);
-            const taskDirs = fs.readdirSync(categoryPath, { withFileTypes: true })
-                .filter(dirent => dirent.isDirectory())
-                .map(dirent => dirent.name);
-            
-            for (const taskDir of taskDirs) {
-                const taskPath = path.join(categoryPath, taskDir);
-                const indexPath = path.join(taskPath, 'index.md');
-                
-                if (fs.existsSync(indexPath)) {
-                    const content = fs.readFileSync(indexPath, 'utf8');
-                    if (content.includes(task.name) || taskDir.includes(task.name.toLowerCase().replace(/\s+/g, '-'))) {
-                        return taskPath;
-                    }
-                }
-            }
-        }
-        
-        return null;
+        return 'REMOVE_THIS';
     }
 
     async isTaskComplete(taskPath) {
-        const requiredFiles = ['index.md', 'implementation.md', 'phase-1.md', 'phase-2.md', 'phase-3.md'];
-        
-        for (const file of requiredFiles) {
-            const filePath = path.join(taskPath, file);
-            if (!fs.existsSync(filePath)) {
-                return false;
-            }
-            
-            // Check for placeholders
-            const content = fs.readFileSync(filePath, 'utf8');
-            if (this.hasPlaceholders(content)) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
-
-    hasPlaceholders(content) {
-        const placeholderPatterns = [
-            /\[GAME_ENGINE\]/g,
-            /\[GAME_GENRE\]/g,
-            /\[GIT_BRANCH_STRATEGY\]/g,
-            /To be filled/i,
-            /\[TO BE FILLED\]/i,
-            /placeholder/i,
-            /\[PLACEHOLDER\]/i,
-            /TODO/i,
-            /FIXME/i,
-            /TBD/i
-        ];
-        
-        return placeholderPatterns.some(pattern => pattern.test(content));
+        return await this.aiFlagDetector.isTaskComplete(taskPath);
     }
 
     async validateSingleTaskCompletion(task, tasksDir) {
@@ -941,44 +846,8 @@ ${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') 
         return await this.isTaskComplete(taskPath);
     }
 
-    async updateOrchestratorProgress(orchestratorPath, completedTask) {
-        try {
-            let content = fs.readFileSync(orchestratorPath, 'utf8');
-            
-            // Update the specific task's status
-            const taskPattern = new RegExp(`(\\|\\s*${completedTask.id}\\s*\\|[^|]+\\|[^|]+\\|)\\s*[^|]*\\|`, 'g');
-            content = content.replace(taskPattern, `$1 ✅ Completed |`);
-            
-            fs.writeFileSync(orchestratorPath, content);
-            this.log(`✅ Updated orchestrator progress for task ${completedTask.id}`);
-        } catch (error) {
-            this.log(`⚠️ Could not update orchestrator: ${error.message}`, 'WARNING');
-        }
-    }
-
-    async createTaskFiles() {
-        this.log('📝 Updating task files in template structure...');
-        
-        // Generate tasks based on AI analysis
-        const tasks = this.generateTasksFromAnalysis();
-        
-        // Use the copied task directory structure
-        const tasksDir = path.join(this.projectPath, 'tasks');
-        
-        if (!fs.existsSync(tasksDir)) {
-            this.log('⚠️ Task directory not found, creating basic structure', 'WARNING');
-            fs.mkdirSync(tasksDir, { recursive: true });
-        }
-        
-        // Update existing task files with generated content
-        for (let i = 0; i < tasks.length; i++) {
-            const task = tasks[i];
-            const taskId = i + 1;
-            
-            await this.updateTaskFilesInTemplate(task, taskId, tasksDir);
-        }
-        
-        this.log(`✅ Updated ${tasks.length} task files in template structure`);
+    async findTaskPath(task, tasksDir) {
+        return await this.aiFlagDetector.findTaskPath(task, tasksDir);
     }
 
     async updateTaskFilesInTemplate(task, taskId, tasksDir) {
@@ -1170,9 +1039,7 @@ ${task.notes || 'Phase-specific notes and considerations.'}
         
         const requiredFiles = [
             'system/orchestrator.md',
-            'tasks',
-            'docs',
-            'mermaid'
+            'tasks'
         ];
         
         for (const file of requiredFiles) {

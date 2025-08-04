@@ -11,21 +11,21 @@ export function loadTaskDefinitions(orchestratorFile) {
     try {
         const orchestratorContent = fs.readFileSync(orchestratorFile, 'utf8');
         
-        // Parse task table from orchestrator
-        const taskTableRegex = /\| (\d+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|/g;
+        // Parse task table from orchestrator - updated regex for task IDs like 1.1, 1.2, etc.
+        const taskTableRegex = /\|\s*(\d+\.\d+)\s*\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|/g;
         let match;
         const taskQueue = [];
         
         while ((match = taskTableRegex.exec(orchestratorContent)) !== null) {
             const task = {
-                id: parseInt(match[1]),
+                id: match[1], // Keep as string for IDs like "1.1"
                 name: match[2].trim(),
                 category: match[3].trim(),
                 time: match[4].trim(),
                 status: match[5].trim(),
                 progress: match[6].trim(),
                 dependencies: match[7].trim(),
-                nextAction: match[8].trim()
+                notes: match[8].trim()
             };
             
             taskQueue.push(task);
