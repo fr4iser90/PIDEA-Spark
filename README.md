@@ -276,7 +276,7 @@ Cursor Automation CDP/
 │       ├── start_ide_example.sh    # Linux/macOS IDE starter
 │       ├── start_ide_example.ps1   # Windows PowerShell IDE starter
 │       └── start_ide_example.bat   # Windows Batch IDE starter
-└── docs/09_roadmap/tasks/
+└── pidea-spark-output/tasks/
     └── system/
         ├── orchestrator.md         # Task definitions
         └── progress-tracker.md     # Progress updates
@@ -287,7 +287,7 @@ Cursor Automation CDP/
 ### Log Files
 - **`automation-workflow-cdp.log`**: Detailed CDP execution logs
 - **`automation-cdp-report-YYYY-MM-DD.md`**: Daily execution reports
-- **`docs/09_roadmap/tasks/system/progress-tracker.md`**: Live progress updates
+- **`pidea-spark-output/tasks/system/progress-tracker.md`**: Live progress updates
 
 ### Debug Mode
 ```bash

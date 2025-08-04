@@ -29,8 +29,8 @@ export const CONFIG = {
     paths: {
         projectRoot: process.cwd(),
         tasksDir: 'docs/09_roadmap/tasks',
-        orchestratorFile: 'docs/09_roadmap/tasks/system/orchestrator.md',
-        progressFile: 'docs/09_roadmap/tasks/system/progress-tracker.md',
+        orchestratorFile: 'pidea-spark-output/tasks/system/orchestrator.md',
+        progressFile: 'pidea-spark-output/tasks/system/progress-tracker.md',
         logFile: 'automation-workflow-cdp.log',
         templateDir: 'docs/template/games/template',
         gamesDir: 'docs/games'

@@ -224,7 +224,7 @@ Prerequisites:
         }
         
         // Check if orchestrator file exists
-        const orchestratorPath = getConfig('paths.orchestratorFile', 'docs/09_roadmap/tasks/system/orchestrator.md');
+        const orchestratorPath = getConfig('paths.orchestratorFile', 'pidea-spark-output/tasks/system/orchestrator.md');
         if (!fs.existsSync(orchestratorPath)) {
             this.log('⚠️ Orchestrator file not found. Are you in the correct directory?', 'WARNING');
         }
@@ -367,7 +367,7 @@ Troubleshooting:
         this.log('📋 Available tasks:');
         console.log('');
         
-        const orchestratorPath = getConfig('paths.orchestratorFile', 'docs/09_roadmap/tasks/system/orchestrator.md');
+        const orchestratorPath = getConfig('paths.orchestratorFile', 'pidea-spark-output/tasks/system/orchestrator.md');
         
         if (fs.existsSync(orchestratorPath)) {
             const content = fs.readFileSync(orchestratorPath, 'utf8');
@@ -401,7 +401,7 @@ Troubleshooting:
         this.log('📊 Current project status:');
         console.log('');
         
-        const progressPath = getConfig('paths.progressFile', 'docs/09_roadmap/tasks/system/progress-tracker.md');
+        const progressPath = getConfig('paths.progressFile', 'pidea-spark-output/tasks/system/progress-tracker.md');
         
         if (fs.existsSync(progressPath)) {
             const content = fs.readFileSync(progressPath, 'utf8');
