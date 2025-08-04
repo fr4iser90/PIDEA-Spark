@@ -318,7 +318,8 @@ export class ProjectDetector {
             await this.findCursorWorkspace();
         }
         
-        const projectPath = path.join(this.outputDir, projectName);
+        // Create project directly in pidea-spark-output (no subdirectory)
+        const projectPath = this.outputDir;
         const systemPath = path.join(projectPath, 'system');
         const tasksPath = path.join(projectPath, 'tasks');
         
@@ -393,15 +394,15 @@ To be defined
     }
 
     getProjectPath(projectName) {
-        return path.join(this.outputDir, projectName);
+        return this.outputDir;
     }
 
     getOrchestratorPath(projectName) {
-        return path.join(this.outputDir, projectName, 'system', 'orchestrator.md');
+        return path.join(this.outputDir, 'system', 'orchestrator.md');
     }
 
     getProgressPath(projectName) {
-        return path.join(this.outputDir, projectName, 'system', 'progress-tracker.md');
+        return path.join(this.outputDir, 'system', 'progress-tracker.md');
     }
 
     // NEW: Get workspace information
