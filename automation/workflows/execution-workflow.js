@@ -235,11 +235,11 @@ export class ExecutionWorkflow {
         return generateExecutionPrompt(task, taskDetails);
     }
 
-    async sendToAIviaCDP(prompt) {
+    async sendToAIviaCDP(prompt, options = {}) {
         this.log('🤖 Sending prompt to Cursor AI via CDP...');
         
         try {
-            return await this.sendToCursor.sendToCursor(prompt);
+            return await this.sendToCursor.sendToCursor(prompt, options);
         } catch (error) {
             this.log(`❌ Failed to send prompt: ${error.message}`, 'ERROR');
             throw error;

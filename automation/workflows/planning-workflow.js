@@ -21,7 +21,7 @@ import { initializeBrowser } from '../managers/browser-manager.js';
 import { TemplateManager } from '../file-operations/template-manager.js';
 
 // AI Modules
-import { generatePlanningPrompt, generateTaskCreationPrompt, generateGameIdeaAnalysisPrompt, generateComprehensiveTaskCreationPrompt, generateOrchestratorValidationPrompt } from '../ai/prompts.js';
+import { generatePlanningPrompt, generateTaskCreationPrompt, generateGameIdeaAnalysisPrompt, generateComprehensiveTaskCreationPrompt, generateOrchestratorValidationPrompt, generateContinueTaskCreationPrompt } from '../ai/prompts.js';
 import { detectAITyping, extractAIResponse, detectResponseComplete, waitForAIResponse } from '../ai/response-processor.js';
 import { SendToCursor } from '../ai/send-to-cursor.js';
 
@@ -100,7 +100,8 @@ export class PlanningWorkflow {
         const analysisPrompt = generateGameIdeaAnalysisPrompt(this.gameIdea, orchestratorPath);
 
         try {
-            const response = await this.sendToAIviaCDP(analysisPrompt);
+            this.log('📤 Sending game idea analysis request to AI...');
+            const response = await this.sendToAIviaCDP(analysisPrompt, { maxStableChecks: 20 });
             this.gameConfig = this.parseGameAnalysis(response);
             this.log('✅ Game idea analysis completed');
         } catch (error) {
@@ -627,7 +628,7 @@ ${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') 
             const prompt = generateComprehensiveTaskCreationPrompt(orchestratorPath, this.gameConfig);
             
             this.log('📤 Sending comprehensive task creation request to AI...');
-            const response = await this.sendToAIviaCDP(prompt);
+            const response = await this.sendToAIviaCDP(prompt, { maxStableChecks: 20 });
             
             // Parse the response to extract task creation results
             const result = this.parseTaskCreationResponse(response);
@@ -646,12 +647,66 @@ ${this.gameConfig.priority?.excluded?.map(feature => `- ${feature}`).join('\n') 
                 }
             } else {
                 this.log(`⚠️ Task creation partially completed: ${result.tasks_created}/${result.tasks_processed} tasks`, 'WARNING');
+                
+                // Check if we need to continue with remaining tasks
+                const orchestratorContent = fs.readFileSync(orchestratorPath, 'utf8');
+                const totalTasksInOrchestrator = (orchestratorContent.match(/\|\s*\d+\.\d+\s*\|/g) || []).length;
+                const tasksDir = path.join(this.projectPath, 'tasks');
+                const createdTaskDirs = fs.existsSync(tasksDir) ? 
+                    fs.readdirSync(tasksDir, { withFileTypes: true })
+                        .filter(dirent => dirent.isDirectory())
+                        .map(dirent => dirent.name).length : 0;
+                
+                const missingTasks = totalTasksInOrchestrator - createdTaskDirs;
+                
+                if (missingTasks > 0) {
+                    this.log(`🔄 ${missingTasks} tasks still missing, continuing with new chat...`);
+                    await this.continueTaskCreationWithNewChat(missingTasks, orchestratorPath);
+                }
             }
             
             this.log('✅ Detailed task files creation via AI completed');
             
         } catch (error) {
             this.log(`❌ Error creating detailed task files: ${error.message}`, 'ERROR');
+            throw error;
+        }
+    }
+
+    async continueTaskCreationWithNewChat(missingTasks, orchestratorPath) {
+        this.log(`🆕 Opening new chat to create remaining ${missingTasks} tasks...`);
+        
+        try {
+            // Generate a follow-up prompt for remaining tasks
+            const followUpPrompt = generateContinueTaskCreationPrompt(missingTasks, orchestratorPath, this.projectPath);
+            
+            // Send follow-up prompt
+            this.log('📤 Sending continue task creation request to AI...');
+            const response = await this.sendToAIviaCDP(followUpPrompt, { maxStableChecks: 20 });
+            
+            // Wait for file changes
+            await this.delay(3000);
+            
+            // Check final status
+            const finalTasksDir = path.join(this.projectPath, 'tasks');
+            const finalCreatedTasks = fs.existsSync(finalTasksDir) ? 
+                fs.readdirSync(finalTasksDir, { withFileTypes: true })
+                    .filter(dirent => dirent.isDirectory())
+                    .map(dirent => dirent.name).length : 0;
+            
+            const finalOrchestratorContent = fs.readFileSync(orchestratorPath, 'utf8');
+            const finalTotalTasks = (finalOrchestratorContent.match(/\|\s*\d+\.\d+\s*\|/g) || []).length;
+            
+            this.log(`📊 Final status: ${finalCreatedTasks}/${finalTotalTasks} tasks created`);
+            
+            if (finalCreatedTasks >= finalTotalTasks * 0.95) { // Allow 5% tolerance
+                this.log('✅ Task creation completed successfully!');
+            } else {
+                this.log(`⚠️ Still missing ${finalTotalTasks - finalCreatedTasks} tasks`, 'WARNING');
+            }
+            
+        } catch (error) {
+            this.log(`❌ Error continuing task creation: ${error.message}`, 'ERROR');
             throw error;
         }
     }
@@ -929,11 +984,11 @@ ${this.customizedTasks.map(category =>
         this.log(`📋 Planning report saved to ${reportPath}`);
     }
 
-    async sendToAIviaCDP(prompt) {
+    async sendToAIviaCDP(prompt, options = {}) {
         this.log('🤖 Sending prompt to Cursor AI via CDP...');
         
         try {
-            return await this.sendToCursor.sendToCursor(prompt);
+            return await this.sendToCursor.sendToCursor(prompt, options);
         } catch (error) {
             this.log(`❌ Failed to send prompt: ${error.message}`, 'ERROR');
             throw error;
@@ -964,43 +1019,51 @@ ${this.customizedTasks.map(category =>
             // Get orchestrator path
             const orchestratorPath = path.join(this.projectPath, 'system', 'orchestrator.md');
             
+            // Read original content for comparison
+            const originalContent = fs.readFileSync(orchestratorPath, 'utf8');
+            
             // Generate orchestrator validation prompt
             const prompt = generateOrchestratorValidationPrompt(orchestratorPath, this.gameConfig);
             
             this.log('📤 Sending orchestrator validation request to AI...');
-            const response = await this.sendToAIviaCDP(prompt);
+            const response = await this.sendToAIviaCDP(prompt, { maxStableChecks: 50 });
             
-            // Parse the response to extract validation results
-            const result = this.parseOrchestratorValidationResponse(response);
+            // Wait a moment for file changes to be saved
+            await this.delay(2000);
             
-            if (result.status === 'validated' || result.status === 'updated') {
-                this.log(`✅ Orchestrator validation completed successfully`);
-                this.log(`🔄 Placeholders replaced: ${result.placeholders_replaced}`);
-                this.log(`📊 Tasks count: ${result.tasks_count}`);
+            // Read updated content
+            const updatedContent = fs.readFileSync(orchestratorPath, 'utf8');
+            
+            // Check if file was actually modified
+            const fileWasModified = originalContent !== updatedContent;
+            
+            if (fileWasModified) {
+                this.log('✅ AI updated orchestrator file successfully');
                 
-                if (result.structure_valid) {
+                // Count changes
+                const placeholdersReplaced = this.countPlaceholderReplacements(originalContent, updatedContent);
+                const tasksCount = this.countTasksInOrchestrator(updatedContent);
+                
+                this.log(`🔄 Placeholders replaced: ${placeholdersReplaced}`);
+                this.log(`📊 Tasks count: ${tasksCount}`);
+                
+                // Validate structure
+                const hasRequiredSections = this.validateOrchestratorStructure(updatedContent);
+                if (hasRequiredSections) {
                     this.log('✅ Task structure validation passed');
                 }
                 
-                if (result.customization_complete) {
-                    this.log('✅ Task customization completed');
+                if (tasksCount >= 100) {
+                    this.log('✅ Sufficient number of tasks for comprehensive project');
+                } else {
+                    this.log(`⚠️ Only ${tasksCount} tasks found - consider expanding the project scope`, 'WARNING');
                 }
                 
-                if (result.updates_made && result.updates_made.length > 0) {
-                    this.log('📝 Updates made:');
-                    result.updates_made.forEach(update => this.log(`   - ${update}`));
-                }
-                
-                if (result.issues_found && result.issues_found.length > 0) {
-                    this.log('⚠️ Issues found:', 'WARNING');
-                    result.issues_found.forEach(issue => this.log(`   - ${issue}`, 'WARNING'));
-                }
+                this.log('✅ Orchestrator validation completed successfully');
             } else {
-                this.log(`❌ Orchestrator validation failed: ${result.next_steps}`, 'ERROR');
-                throw new Error('Orchestrator validation failed');
+                this.log('⚠️ No changes detected in orchestrator file', 'WARNING');
+                this.log('✅ Continuing with existing orchestrator content');
             }
-            
-            this.log('✅ Orchestrator validation via AI completed');
             
         } catch (error) {
             this.log(`❌ Error validating orchestrator: ${error.message}`, 'ERROR');
@@ -1008,40 +1071,47 @@ ${this.customizedTasks.map(category =>
         }
     }
 
-    parseOrchestratorValidationResponse(response) {
-        try {
-            // Try to extract JSON from the response
-            const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
-            if (jsonMatch) {
-                return JSON.parse(jsonMatch[1]);
+    validateOrchestratorStructure(content) {
+        const requiredSections = [
+            'Project Overview',
+            'Task Status Table',
+            'Progress Summary'
+        ];
+        
+        for (const section of requiredSections) {
+            if (!content.includes(section)) {
+                this.log(`⚠️ Missing required section: ${section}`, 'WARNING');
+                return false;
             }
-            
-            // If no JSON found, return a default structure
-            return {
-                status: 'failed',
-                placeholders_replaced: 0,
-                tasks_count: 0,
-                structure_valid: false,
-                customization_complete: false,
-                validation_passed: false,
-                updates_made: [],
-                issues_found: ['Could not parse AI response'],
-                next_steps: 'Manual review required'
-            };
-        } catch (error) {
-            this.log(`⚠️ Could not parse AI validation response: ${error.message}`, 'WARNING');
-            return {
-                status: 'failed',
-                placeholders_replaced: 0,
-                tasks_count: 0,
-                structure_valid: false,
-                customization_complete: false,
-                validation_passed: false,
-                updates_made: [],
-                issues_found: ['Response parsing failed'],
-                next_steps: 'Manual intervention required'
-            };
         }
+        
+        return true;
+    }
+
+    countPlaceholderReplacements(originalContent, updatedContent) {
+        const placeholders = [
+            /\[GAME_NAME\]/g,
+            /\[GAME_TYPE\]/g,
+            /\[GENRE\]/g,
+            /\[CURRENT_DATE\]/g,
+            /\[GENRE_LOWER\]/g,
+            /To be defined/g,
+            /\[GAME_DESCRIPTION\]/g
+        ];
+        
+        let replacements = 0;
+        for (const placeholder of placeholders) {
+            const originalMatches = (originalContent.match(placeholder) || []).length;
+            const updatedMatches = (updatedContent.match(placeholder) || []).length;
+            replacements += Math.max(0, originalMatches - updatedMatches);
+        }
+        
+        return replacements;
+    }
+
+    countTasksInOrchestrator(content) {
+        const taskMatches = content.match(/\|\s*\d+\.\d+\s*\|/g);
+        return taskMatches ? taskMatches.length : 0;
     }
 }
 

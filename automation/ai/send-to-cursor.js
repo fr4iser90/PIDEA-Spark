@@ -17,7 +17,7 @@ export class SendToCursor {
         this.delay = delay;
     }
 
-    async sendToCursor(prompt) {
+    async sendToCursor(prompt, options = {}) {
         // Use imported selectors
         const chatSelectors = cursorSelectors;
 
@@ -77,13 +77,13 @@ export class SendToCursor {
         
         this.log('📤 Prompt sent to Cursor, waiting for response...');
         
-        // 6. Wait for response
-        const response = await this.waitForAIResponse(chatSelectors);
+        // 6. Wait for response with options
+        const response = await this.waitForAIResponse(chatSelectors, options);
         
         return response;
     }
 
-    async waitForAIResponse(chatSelectors) {
+    async waitForAIResponse(chatSelectors, options = {}) {
         return waitForAIResponse(
             this.page, 
             chatSelectors, 
@@ -92,7 +92,8 @@ export class SendToCursor {
             streamingSelectors, 
             errorSelectors, 
             this.log, 
-            this.delay
+            this.delay,
+            options
         );
     }
 }

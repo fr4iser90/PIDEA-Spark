@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 // Prompt generation function (extracted from automation-workflow-cdp.js)
 export function generateExecutionPrompt(task, taskDetails) {
     return `# Cursor Automation CDP Task Execution
@@ -341,13 +344,87 @@ Please respond with:
 - Add proper documentation and testing requirements for each task
 
 ## File Structure
-For each task, create:
-- \`tasks/[task-id]-[task-name]/index.md\` - Task overview and requirements
-- \`tasks/[task-id]-[task-name]/implementation.md\` - Technical implementation plan
-- \`tasks/[task-id]-[task-name]/phases.md\` - Three-phase breakdown
-- \`tasks/[task-id]-[task-name]/validation.md\` - Success criteria and testing
+For each task, create directories following the template structure:
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/index.md\` - Task overview and requirements
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/implementation.md\` - Technical implementation plan
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/phases.md\` - Three-phase breakdown
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/validation.md\` - Success criteria and testing
+
+**NAMING CONVENTIONS:**
+- **Task IDs in orchestrator**: Use dots (1.1, 1.2, 2.1, etc.)
+- **Directory names**: Use dashes (01-project-setup, 01-git-repository-branching)
+- **Category names**: Use dashes (project-setup, core-engine)
+
+Example:
+- **Orchestrator Task ID**: 1.1
+- **Directory Path**: \`tasks/01-project-setup/01-git-repository-branching/index.md\`
+- **Category**: project-setup
+
+**CRITICAL**: Use ONLY the template structure above. DO NOT use orchestrator task IDs (like 1.1, 1.2, 2.1, etc.) for directory names. Only use the sequential category and task numbering from the template.
 
 **DIRECTLY UPDATE THE ORCHESTRATOR FILE** with progress and validation results.`;
+}
+
+// NEW: Continue Task Creation Prompt for remaining tasks
+export function generateContinueTaskCreationPrompt(missingTasks, orchestratorPath, projectPath) {
+    const tasksDir = path.join(projectPath, 'tasks');
+    const createdTasks = fs.existsSync(tasksDir) ? 
+        fs.readdirSync(tasksDir, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name).length : 0;
+    
+    return `# Continue Task Creation - Remaining Tasks
+
+## Status Update
+- **Total Tasks Required**: ${missingTasks + createdTasks}
+- **Tasks Already Created**: ${createdTasks}
+- **Tasks Still Missing**: ${missingTasks}
+
+## Orchestrator File
+Please read the orchestrator file at: ${orchestratorPath}
+
+## Request
+Please create the remaining ${missingTasks} task files that are still missing:
+
+1. **Check which tasks are missing** by comparing orchestrator tasks with existing task directories
+2. **Create only the missing task files** with proper structure:
+   - Task index with overview and requirements
+   - Implementation plan with technical details
+   - Three-phase breakdown (Foundation, Core, Integration)
+   - Success criteria and validation methods
+
+3. **Update the orchestrator file** with:
+   - Correct progress indicators
+   - Updated task status
+   - Validation results
+
+## File Structure
+For each task, create directories following the template structure:
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/index.md\` - Task overview and requirements
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/implementation.md\` - Technical implementation plan
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/phases.md\` - Three-phase breakdown
+- \`tasks/[category-id]-[category-name]/[task-id]-[task-name]/validation.md\` - Success criteria and testing
+
+**NAMING CONVENTIONS:**
+- **Task IDs in orchestrator**: Use dots (1.1, 1.2, 2.1, etc.)
+- **Directory names**: Use dashes (01-project-setup, 01-git-repository-branching)
+- **Category names**: Use dashes (project-setup, core-engine)
+
+Example:
+- **Orchestrator Task ID**: 1.1
+- **Directory Path**: \`tasks/01-project-setup/01-git-repository-branching/index.md\`
+- **Category**: project-setup
+
+**CRITICAL**: Use ONLY the template structure above. DO NOT use orchestrator task IDs (like 1.1, 1.2, 2.1, etc.) for directory names. Only use the sequential category and task numbering from the template.
+
+## Important Instructions
+- Focus ONLY on the missing tasks
+- Don't recreate existing task files
+- Ensure all ${missingTasks} missing tasks are created
+- Update orchestrator progress to show 100% completion
+- Make all content production-ready
+
+**CRITICAL**: Complete the remaining task creation to reach 100% completion.`;
 }
 
 // NEW: Orchestrator Validation Prompt for Planning Workflow

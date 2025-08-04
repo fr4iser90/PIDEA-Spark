@@ -291,8 +291,12 @@ export async function detectResponseComplete(page, currentText, lastLength, log)
     }
 }
 
-export async function waitForAIResponse(page, chatSelectors, typingSelectors, cursorBlinkSelectors, streamingSelectors, errorSelectors, log, delay) {
+export async function waitForAIResponse(page, chatSelectors, typingSelectors, cursorBlinkSelectors, streamingSelectors, errorSelectors, log, delay, options = {}) {
     log('⏳ Waiting for AI response to start...');
+    
+    // Configuration for planning workflow
+    const maxStableChecks = options.maxStableChecks || 50; // Default 50, planning uses 20
+    let stableCheckCount = 0;
     
     // Wait for response to start appearing
     await delay(3000);
@@ -309,9 +313,17 @@ export async function waitForAIResponse(page, chatSelectors, typingSelectors, cu
             if (currentText && currentText.length > lastLength) {
                 responseText = currentText;
                 lastLength = currentText.length;
+                stableCheckCount = 0; // Reset stable count when text grows
                 log(`📝 Response growing: ${currentText.length} characters`);
             } else if (currentText && currentText.length === lastLength && currentText.length > 0) {
-                log(`⏸️ Response stable`);
+                stableCheckCount++;
+                log(`⏸️ Response stable (${stableCheckCount}/${maxStableChecks})`);
+                
+                // For planning workflow: force continue after max stable checks
+                if (stableCheckCount >= maxStableChecks) {
+                    log(`⏰ Max stable checks reached (${maxStableChecks}), forcing continuation`);
+                    break;
+                }
             } else if (!currentText) {
                 // No response found yet, wait a bit longer
             }
@@ -330,6 +342,7 @@ export async function waitForAIResponse(page, chatSelectors, typingSelectors, cu
             
             if (isTyping) {
                 log('⌨️ AI is actively typing...');
+                stableCheckCount = 0; // Reset stable count when typing
                 await delay(2000);
                 continue;
             }
