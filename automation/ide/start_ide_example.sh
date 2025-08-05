@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
-cd "$HOME/Documents" || exit 1
-
-# Lade Konfiguration (falls vorhanden)
-if [[ -f "$(dirname "$0")/ide-config.local.env" ]]; then
-    source "$(dirname "$0")/ide-config.local.env"
-fi
-
 # Konfigurierbare Pfade - HIER ANPASSEN!
 CURSOR_PATH="${CURSOR_PATH:-./Cursor-1.2.2-x86_64.AppImage}"
 APPIMAGE_RUNNER="${APPIMAGE_RUNNER:-appimage-run}"
 
 # Cursor IDE Konfiguration
 CURSOR_PORT=9222
+
+cd "$HOME/Documents" || exit 1
+
+# Lade Konfiguration (falls vorhanden)
+if [[ -f "$(dirname "$0")/ide-config.local.env" ]]; then
+    source "$(dirname "$0")/ide-config.local.env"
+fi
 
 # Hilfsfunktion: prüft ob Port frei ist
 port_in_use() {

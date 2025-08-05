@@ -1,452 +1,422 @@
-# 🤖 Cursor Automation CDP Task Automation System
+# 🚀 PIDEA-Spark - AI-Powered Game Development Automation
 
-## 🎯 Overview
+**PIDEA-Spark** is an intelligent automation system that uses AI to create, plan, and execute workflows with templates on projects through Cursor IDE integration.
 
-This system automates Cursor Automation CDP development tasks by **directly controlling Cursor IDE** through **Chrome DevTools Protocol (CDP)** using Playwright. No APIs needed!
+## 🎯 Current Status
 
-### 🚀 Key Features
-- **Direct Cursor IDE Control**: Uses CDP to control Cursor IDE like a human
-- **No API Keys Required**: Works with any Cursor IDE session
-- **Real-time Interaction**: Types prompts and reads responses in real-time
-- **Automatic Task Execution**: Goes through all 27 tasks systematically
-- **Progress Tracking**: Updates task status automatically
-- **Multi-Instance Support**: Run multiple Cursor instances on different ports
+### **Available Workflows:**
+- ✅ **Execution Workflow** - Task execution and implementation
+- ✅ **Planning Workflow** - Project planning and task generation
+- ❌ **Debugging Workflow** - Issue resolution *(empty)*
+- ❌ **Testing Workflow** - Quality assurance *(empty)*
+- ❌ **Analyzation Workflow** - Code analysis *(empty)*
 
-## 🔧 Setup
+### **Available Templates:**
+- ✅ **Game Development** - Complete template with 105 tasks
+- ❌ **Web Application** - Template structure missing
+- ❌ **Backend API** - Template missing
+- ❌ **Mobile App** - Template missing
+- ❌ **Desktop App** - Template missing
 
-### 1. Install Dependencies
+### **Run Full Workflows with Templates:**
+- ✅ **Game Development** - From idea via planning/execution to testing/documentation/deploy
+- ❌ **Web Application** - Template and workflow missing
+- ❌ **Backend API** - Template and workflow missing
+- ❌ **Mobile App** - Template and workflow missing
+
+## 🎮 What is PIDEA-Spark?
+
+PIDEA-Spark automates the entire development workflow:
+
+- **🎯 Project Planning**: Converts ideas into structured development plans
+- **🤖 AI-Powered Task Generation**: Creates detailed task breakdowns using AI
+- **🚀 Automated Execution**: Executes tasks through Cursor IDE integration
+- **📊 Progress Tracking**: Monitors and reports on project progress
+- **🔄 Multi-Agent Support**: Run multiple projects simultaneously
+
+## 🏗️ Architecture
+
+```
+PIDEA-Spark
+├── 🎮 Game Ideas → AI Analysis → Project Structure
+├── 📋 Task Templates → AI Customization → Detailed Tasks  
+├── 🤖 Cursor IDE Integration → CDP Automation → Task Execution
+├── 📊 Progress Tracking → Status Reports → Completion
+└── 🔄 Multi-Agent System → Parallel Development
+```
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+
+- **Node.js** (v18 or higher)
+- **Cursor IDE** (for automation) with Remote CDP port up + Unsandboxed (Linux)
+- **Git** (for version control)
+
+### 2. Installation
 
 ```bash
-# Install Playwright
-npm install playwright
+# Clone the repository
+git clone https://github.com/fr4iser90/PIDEA-Spark.git
+cd PIDEA-Spark
 
-# Make scripts executable
-chmod +x run-automation-cdp.sh automation-workflow-cdp.js
-chmod +x automation/ide/start_ide_example.sh
+# Install dependencies
+npm install
+node pidea-spark.js
 ```
 
-### 2. Download Cursor IDE
-
-**Linux:**
-```bash
-# Download Cursor AppImage
-wget https://download.cursor.sh/linux/appImage/x64 -O Cursor-1.2.2-x86_64.AppImage
-chmod +x Cursor-1.2.2-x86_64.AppImage
-```
-
-**Windows:**
-```bash
-# Download Cursor .exe from https://cursor.sh
-# Place Cursor.exe in your project directory
-```
-
-**macOS:**
-```bash
-# Download Cursor .dmg from https://cursor.sh
-# Install and use the installed version
-```
-
-### 3. Configure IDE Paths
-
-Edit the IDE start scripts to point to your Cursor installation:
-
-**Linux (`automation/ide/start_ide_example.sh`):**
-```bash
-declare -A IDES=(
-  ["cursor"]="./Cursor-1.2.2-x86_64.AppImage"  # Update path here
-  ["vscode"]="code"
-)
-```
-
-**Windows (`automation/ide/start_ide_example.ps1`):**
-```powershell
-$IDES = @{
-    "cursor" = ".\Cursor.exe"  # Update path here
-    "vscode" = "code"
-}
-```
-
-**Windows Batch (`automation/ide/start_ide_example.bat`):**
-```batch
-set "CURSOR_PATH=.\Cursor.exe"  # Update path here
-```
-
-### 4. Start Cursor IDE with CDP
+### 3. Start Cursor IDE
 
 ```bash
 # Linux/macOS
-./automation/ide/start_ide_example.sh cursor auto
+./start_ide_example.sh start
 
 # Windows PowerShell
-.\automation\ide\start_ide_example.ps1 cursor auto
+.\start_ide_example.ps1 start
 
 # Windows Batch
-automation\ide\start_ide_example.bat cursor auto
+start_ide_example.bat start
 ```
 
-### 5. Verify CDP Connection
+### 4. Run PIDEA-Spark
 
 ```bash
-# Check if Cursor is running with CDP (replace PORT with actual port)
-curl http://localhost:9222/json/version
+# Start the main application
+node pidea-spark.js
 ```
 
-## 🎮 Usage
+## 🎯 Features
 
-### Basic Commands
+### **Project Planning**
+- Convert game ideas into structured projects
+- AI-powered task breakdown and customization
+- Template-based project structure generation
+- Dependency management and task ordering
+
+### **AI Integration**
+- Direct integration with Cursor IDE's AI
+- Automated task execution through CDP
+- Intelligent task customization based on project type
+- Progress tracking and status updates
+
+### **Multi-Agent System**
+- Run multiple projects simultaneously
+- Workspace isolation for parallel development
+- Agent detection and management
+- Resource optimization and conflict prevention
+
+### **Development Workflows**
+- **Planning Workflow**: Create new projects
+- **Execution Workflow**: Run existing project tasks
+- **Debugging Workflow**: Analyze and fix issues *(coming soon)*
+- **Testing Workflow**: Automated testing and validation *(coming soon)*
+
+## 📁 Project Structure
+
+```
+PIDEA-Spark/
+├── automation/
+│   ├── ai/                 # AI prompts and processing
+│   │   ├── prompts/
+│   │   │   ├── gaming/     # ✅ Game development prompts
+│   │   │   ├── webapps/    # ⚠️  Partial webapp prompts
+│   │   │   ├── shared/     # ✅ Shared prompts
+│   │   │   └── debugging/  # ❌ Missing prompts
+│   ├── core/              # Core system components
+│   ├── file-operations/   # File and flag detection
+│   ├── git-operations/    # Git integration
+│   ├── ide/              # Cursor IDE integration
+│   ├── managers/         # Task and workflow managers
+│   ├── templates/        # Project templates
+│   │   └── games/        # ✅ Complete game template
+│   ├── ui/              # User interface components
+│   ├── utils/           # Utility functions
+│   └── workflows/       # Main workflow implementations
+│       ├── planning-workflow.js      # ✅ Complete
+│       ├── execution-workflow.js     # ✅ Complete
+│       ├── testing-workflow.js       # ❌ Empty
+│       ├── debugging-workflow.js     # ❌ Empty
+│       └── analyzation-workflow.js   # ❌ Empty
+├── pidea-spark-output/   # Generated projects
+├── pidea-spark.js       # Main application entry point
+└── README.md           # This file
+```
+
+## 🎮 Usage Examples
+
+### Create a New Game Project
 
 ```bash
-# Run with Cursor (default)
-./run-automation-cdp.sh
+# Start PIDEA-Spark
+node pidea-spark.js
 
-# Use different CDP port
-./run-automation-cdp.sh -p 9224
-
-# Start from specific task
-./run-automation-cdp.sh --task-id=5
+# Select: Planning Workflow → Create New Game Project
+# Enter your game idea: "A 2D platformer with puzzle elements"
+# AI will generate a complete project structure with 105 tasks
 ```
 
-### IDE Management Commands
+### Convert Idea to Project
 
 ```bash
-# Start Cursor with automatic port selection
-./automation/ide/start_ide_example.sh cursor auto
-
-# Start Cursor on specific port slot
-./automation/ide/start_ide_example.sh cursor 3
-
-# Interactive menu
-./automation/ide/start_ide_example.sh menu
-
-# Show help
-./automation/ide/start_ide_example.sh help
+# Select: Planning Workflow → Convert Idea to Project
+# Choose from available ideas
+# AI will analyze and create a structured project
 ```
 
-### Information Commands
+### Execute Project Tasks
 
 ```bash
-# List all tasks
-./run-automation-cdp.sh --list-tasks
-
-# Show current status
-./run-automation-cdp.sh --status
-
-# Get Cursor setup help
-./run-automation-cdp.sh --setup-cursor
+# Select: Execute Workflow → Execute All Tasks
+# AI will process tasks through Cursor IDE
+# Monitor progress in real-time
 ```
-
-### Utility Commands
-
-```bash
-# Reset all task statuses
-./run-automation-cdp.sh --reset
-
-# Dry run (see what would happen)
-./run-automation-cdp.sh --dry-run
-
-# Verbose output
-./run-automation-cdp.sh --verbose
-```
-
-## 🔍 How It Works
-
-### 1. CDP Connection
-```javascript
-// Connect to existing Cursor IDE instance
-const browser = await chromium.connectOverCDP(`http://localhost:9222`);
-const page = browser.pages()[0]; // Use existing page
-```
-
-### 2. Cursor IDE Detection
-The system automatically detects and works with:
-
-**Cursor IDE:**
-- CDP URL: `http://localhost:9222` (Cursor CDP debugging port)
-- Input selector: `[data-testid="chat-input"], textarea, input[type="text"]`
-- Send key: `Enter`
-
-### 3. Task Execution Flow
-
-```mermaid
-graph TD
-    A[Load Task] --> B[Generate Prompt]
-    B --> C[Find Input Field]
-    C --> D[Type Prompt]
-    D --> E[Press Enter]
-    E --> F[Wait for Response]
-    F --> G[Parse Response]
-    G --> H[Validate Completion]
-    H --> I[Update Task Status]
-    I --> J[Next Task]
-```
-
-### 4. AI Communication
-
-The system sends structured prompts like:
-
-```
-# Cursor Automation CDP Task Execution
-
-## Task Information
-- ID: 1
-- Name: Core Game Engine Foundation
-- Category: game-engine
-- Estimated Time: 10h
-
-## Instructions
-Please execute this task completely by:
-1. Analyzing the current codebase
-2. Implementing all required functionality
-3. Creating/modifying all necessary files
-4. Adding comprehensive tests
-5. Updating documentation
-
-## Response Format
-```json
-{
-  "status": "completed",
-  "files_created": ["file1.js", "file2.js"],
-  "files_modified": ["existing.js"],
-  "tests_added": ["test1.test.js"],
-  "validation_passed": true
-}
-```
-```
-
-## 📊 Task Categories & Automation Levels
-
-### Full Auto Tasks (AI can handle completely)
-- **Game Engine** (4 tasks): Core systems, character movement, combat
-- **Frontend** (3 tasks): UI components, responsive design, controls
-- **Data** (1 task): Statistics, leaderboards, tracking
-- **Features** (3 tasks): Replay, spectator mode, social features
-- **RPG Systems** (8 tasks): Inventory, NPCs, quests, skills
-
-### Partial Auto Tasks (AI + human review)
-- **Game Design** (2 tasks): Creative decisions need human input
-- **Assets** (3 tasks): Visual/audio assets need human creation
-- **Deployment** (1 task): Production deployment needs oversight
 
 ## 🔧 Configuration
 
+### Cursor IDE Setup
+
+1. **Download Cursor IDE** from https://cursor.sh
+2. **Configure paths** in `automation/ide/ide-config.local.env`
+3. **Start Cursor** with CDP enabled on port 9222
+
 ### Environment Variables
+
 ```bash
-# Optional: Set custom CDP port
-export CDP_PORT=9222
-
-# Optional: Set Cursor IDE path
-export CURSOR_PATH="./Cursor-1.2.2-x86_64.AppImage"
+# Optional: Set custom paths
+export PIDEA_PROJECT_ROOT="/path/to/projects"
+export PIDEA_TEMPLATE_DIR="/path/to/templates"
+export PIDEA_CDP_PORT=9222
 ```
 
-### Configuration File
-`automation-cdp-config.json`:
-```json
-{
-  "cdp": {
-    "port": 9222,
-    "target": "cursor",
-    "timeout": 30000
-  },
-  "automation": {
-    "delay_between_tasks": 3000,
-    "max_retries": 3,
-    "response_timeout": 300000
-  },
-  "targets": {
-    "cursor": {
-      "url": "http://localhost:9222",
-      "input_selector": "[data-testid=\"chat-input\"], textarea, input[type=\"text\"]",
-      "send_key": "Enter"
-    }
-  }
-}
-```
+## 📊 Multi-Agent System
 
-## 📁 File Structure
+PIDEA-Spark supports running multiple agents simultaneously:
 
 ```
-Cursor Automation CDP/
-├── automation-workflow-cdp.js      # Main CDP automation script
-├── run-automation-cdp.sh           # CDP shell wrapper
-├── automation-cdp-config.json      # CDP configuration
-├── automation-workflow-cdp.log     # CDP execution logs
-├── automation-cdp-report-YYYY-MM-DD.md # Daily reports
-├── automation/
-│   └── ide/
-│       ├── start_ide_example.sh    # Linux/macOS IDE starter
-│       ├── start_ide_example.ps1   # Windows PowerShell IDE starter
-│       └── start_ide_example.bat   # Windows Batch IDE starter
-└── pidea-spark-output/tasks/
-    └── system/
-        ├── orchestrator.md         # Task definitions
-        └── progress-tracker.md     # Progress updates
+🎮 PIDEA-Spark Multi-Agent Dashboard
+====================================
+
+🤖 Agent 1 (Port 9222):
+   📁 Workspace: /home/user/Documents/Git/project1
+   🎮 Project: platformer-game
+   ⏱️  Runtime: 2h 15m
+   📊 Status: AI processing task 45/105
+
+🤖 Agent 2 (Port 9223):
+   📁 Workspace: /home/user/Documents/Git/project2
+   🎮 Project: puzzle-game
+   ⏱️  Runtime: 1h 30m
+   📊 Status: Planning phase
 ```
 
-## 🔍 Monitoring & Debugging
+### Agent Management
 
-### Log Files
-- **`automation-workflow-cdp.log`**: Detailed CDP execution logs
-- **`automation-cdp-report-YYYY-MM-DD.md`**: Daily execution reports
-- **`pidea-spark-output/tasks/system/progress-tracker.md`**: Live progress updates
+- **Automatic Port Discovery**: Finds available ports (9222-9230)
+- **Workspace Isolation**: Each agent works in separate workspace
+- **Resource Management**: Prevents conflicts and optimizes resources
+- **Health Monitoring**: Tracks agent status and performance
 
-### Debug Mode
-```bash
-# Enable verbose logging
-./run-automation-cdp.sh --verbose
-
-# Check logs in real-time
-tail -f automation-workflow-cdp.log
-
-# Test CDP connection
-curl http://localhost:9222/json/version
-```
-
-## 🛠️ Troubleshooting
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-**CDP Connection Failed**
+**Cursor IDE not found:**
 ```bash
-# Check if Cursor is running with CDP
-curl http://localhost:9222/json/version
-
-# Restart Cursor with CDP
-./automation/ide/start_ide_example.sh cursor auto
-```
-
-**Cursor Not Found**
-```bash
-# Check if Cursor is in the right location
+# Check Cursor installation
 ls -la Cursor-1.2.2-x86_64.AppImage
 
-# Update path in start script
-nano automation/ide/start_ide_example.sh
+# Update path in configuration
+nano automation/ide/ide-config.local.env
 ```
 
-**Response Timeout**
+**Port already in use:**
 ```bash
-# Increase timeout in config
-# Check if AI is responding in Cursor
-# Verify internet connection
+# Check port usage
+netstat -tuln | grep :9222
+
+# Stop existing Cursor
+./automation/ide/start_ide_example.sh stop
+
+# Start fresh
+./automation/ide/start_ide_example.sh start
 ```
 
-### Debug Steps
-
-1. **Check CDP Connection**
-   ```bash
-   curl http://localhost:9222/json/version
-   ```
-
-2. **Verify Cursor IDE**
-   - Make sure Cursor is fully loaded
-   - Check if chat interface is available
-
-3. **Test Manual Interaction**
-   - Try typing in the chat input manually
-   - Verify the input selector works
-
-4. **Check Logs**
-   ```bash
-   tail -f automation-workflow-cdp.log
-   ```
-
-## 🔄 Workflow Examples
-
-### Complete Project Automation
+**AI not responding:**
 ```bash
-# 1. Start Cursor with CDP
-./automation/ide/start_ide_example.sh cursor auto
+# Check CDP connection
+curl http://localhost:9222/json/version
 
-# 2. Wait for Cursor to fully load
-
-# 3. Run automation
-./run-automation-cdp.sh
-
-# 4. Monitor progress
-./run-automation-cdp.sh --status
+# Restart Cursor IDE
+./automation/ide/start_ide_example.sh restart
 ```
 
-### Incremental Development
+### Debug Mode
+
 ```bash
-# Start from specific task
-./run-automation-cdp.sh --task-id=5
+# Enable debug logging
+DEBUG=* node pidea-spark.js
 
-# Continue from where you left off
-./run-automation-cdp.sh
-
-# Check what's completed
-./run-automation-cdp.sh --list-tasks
+# Check specific component
+DEBUG=pidea-spark:ai node pidea-spark.js
 ```
 
-### Multiple Cursor Instances
+## 📋 TODO: Missing Components
+
+### **Templates to Implement:**
+
+#### **1. Web Application Template** 🚧
+- [ ] Create `automation/templates/webapps/` directory
+- [ ] Add task structure (frontend, backend, deployment)
+- [ ] Create AI prompts for webapp development
+- [ ] Add webapp-specific task categories
+
+#### **2. Backend API Template** 📋
+- [ ] Create `automation/templates/backend/` directory
+- [ ] Add API development task structure
+- [ ] Create backend-specific AI prompts
+- [ ] Add database, authentication, testing tasks
+
+#### **3. Mobile App Template** 📱
+- [ ] Create `automation/templates/mobile/` directory
+- [ ] Add React Native/Flutter task structure
+- [ ] Create mobile-specific AI prompts
+- [ ] Add platform-specific tasks (iOS/Android)
+
+#### **4. Desktop App Template** 💻
+- [ ] Create `automation/templates/desktop/` directory
+- [ ] Add Electron/Tauri task structure
+- [ ] Create desktop-specific AI prompts
+- [ ] Add packaging and distribution tasks
+
+### **Workflows to Implement:**
+
+#### **1. Testing Workflow** 🧪
+- [ ] Implement `automation/workflows/testing-workflow.js`
+- [ ] Add unit test generation
+- [ ] Add integration test setup
+- [ ] Add E2E test automation
+- [ ] Add coverage reporting
+
+#### **2. Debugging Workflow** 🐛
+- [ ] Implement `automation/workflows/debugging-workflow.js`
+- [ ] Add error analysis and categorization
+- [ ] Add bug reproduction and isolation
+- [ ] Add fix generation and validation
+- [ ] Add root cause analysis
+
+#### **3. Analyzation Workflow** 📊
+- [ ] Implement `automation/workflows/analyzation-workflow.js`
+- [ ] Add code quality assessment
+- [ ] Add architecture review
+- [ ] Add performance analysis
+- [ ] Add security audit
+
+### **AI Prompts to Add:**
+
+#### **1. Backend Prompts** 🔧
+- [ ] Create `automation/ai/prompts/backend/` directory
+- [ ] Add backend planning prompts
+- [ ] Add API design prompts
+- [ ] Add database schema prompts
+
+#### **2. Mobile Prompts** 📱
+- [ ] Create `automation/ai/prompts/mobile/` directory
+- [ ] Add mobile app planning prompts
+- [ ] Add platform-specific prompts
+- [ ] Add UI/UX prompts
+
+#### **3. Testing Prompts** 🧪
+- [ ] Create `automation/ai/prompts/testing/` directory
+- [ ] Add test generation prompts
+- [ ] Add test planning prompts
+- [ ] Add quality assurance prompts
+
+## 🔄 Development
+
+### Adding New Templates
+
+1. Create template in `automation/templates/[type]/`
+2. Add task structure and AI prompts
+3. Update template registry
+4. Test with new project creation
+
+### Extending AI Prompts
+
+1. Modify prompts in `automation/ai/prompts/[type]/`
+2. Add new prompt types as needed
+3. Update response processing
+4. Test with AI integration
+
+### Custom Workflows
+
+1. Create workflow in `automation/workflows/`
+2. Implement workflow interface
+3. Add to menu system
+4. Test integration
+
+## 📈 Roadmap
+
+### Phase 1: Core Features ✅
+- [x] Basic project planning
+- [x] AI integration
+- [x] Task execution
+- [x] Progress tracking
+- [x] Game development template
+
+### Phase 2: Additional Templates 🚧
+- [ ] Web application template
+- [ ] Backend API template
+- [ ] Mobile app template
+- [ ] Desktop app template
+
+### Phase 3: Advanced Workflows 📋
+- [ ] Testing workflow
+- [ ] Debugging workflow
+- [ ] Analyzation workflow
+- [ ] Documentation workflow
+
+### Phase 4: Multi-Agent System 🔄
+- [ ] Agent detection and management
+- [ ] Port auto-discovery
+- [ ] Workspace isolation
+- [ ] Agent coordination
+
+### Phase 5: Ecosystem 📊
+- [ ] Plugin system
+- [ ] Template marketplace
+- [ ] Community features
+- [ ] Enterprise features
+
+## 🤝 Contributing
+
+1. **Fork** the repository
+2. **Create** a feature branch
+3. **Make** your changes
+4. **Test** thoroughly
+5. **Submit** a pull request
+
+### Development Setup
+
 ```bash
-# Start first Cursor instance
-./automation/ide/start_ide_example.sh cursor 1
+# Clone and setup
+git clone https://github.com/fr4iser90/PIDEA-Spark.git
+cd PIDEA-Spark
+npm install
 
-# Start second Cursor instance
-./automation/ide/start_ide_example.sh cursor 2
-
-# Run automation on specific port
-./run-automation-cdp.sh -p 9222
+node pidea-spark.js
 ```
 
-## 📈 Expected Results
+## 📄 License
 
-### Time Savings
-- **Manual development**: 194 hours (8 weeks)
-- **Cursor automation**: ~10-20 hours (3-5 days)
-- **Time savings**: 90-95% reduction
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### Quality Improvements
-- Consistent AI interaction patterns
-- Real-time response monitoring
-- Automatic task progression
-- Comprehensive logging
+## 🙏 Acknowledgments
 
-### Advantages over API
-- **No API keys required**
-- **Works with any Cursor IDE session**
-- **Real-time visual feedback**
-- **No rate limits**
-- **More natural interaction**
-
-## 🎉 Success Metrics
-
-The system considers a task successful when:
-- ✅ `status` is "completed"
-- ✅ `validation_passed` is `true`
-- ✅ Files are listed as created/modified
-- ✅ Tests are added
-- ✅ Documentation is updated
-
-## 🔮 Future Enhancements
-
-- **Multi-Tab Support**: Handle multiple conversations
-- **File Upload**: Automatically upload files to AI
-- **Screenshot Analysis**: Analyze visual responses
-- **Voice Integration**: Voice commands for control
-- **Multi-IDE Support**: VSCode, IntelliJ, etc.
-- **Parallel Execution**: Multiple tasks simultaneously
-
-## 🚨 Important Notes
-
-### Security
-- CDP gives full browser control
-- Only use with trusted applications
-- Don't run with sensitive data open
-
-### Reliability
-- Internet connection required
-- AI response quality varies
-- Manual review recommended for critical tasks
-
-### Performance
-- Response times depend on AI service
-- Large prompts may timeout
-- Consider breaking complex tasks
+- **Cursor IDE** for the amazing AI-powered development environment
+- **Chrome DevTools Protocol** for enabling automation
+- **Node.js** community for the excellent ecosystem
+- **OpenAI** for inspiring AI integration
 
 ---
 
-**Happy Cursor IDE Automating! 🚀**
-
-*This system transforms your development workflow by directly controlling Cursor IDE through the browser, eliminating the need for APIs and providing real-time interaction.* 
+**Happy Development with PIDEA-Spark! 🚀💻**
