@@ -35,6 +35,9 @@ export class ProjectDetector {
     async initialize() {
         // Try to find Cursor workspace
         await this.findCursorWorkspace();
+        
+        // Log the final output directory being used
+        this.log(`📁 Final output directory: ${this.outputDir}`);
     }
 
     async findCursorWorkspace() {
@@ -69,6 +72,7 @@ export class ProjectDetector {
 
     async detectProjects() {
         this.log('🔍 Detecting available projects...');
+        this.log(`📁 Scanning directory: ${this.outputDir}`);
         
         const projects = [];
         const ideas = [];
@@ -81,10 +85,28 @@ export class ProjectDetector {
                 return { projects, ideas };
             }
             
-            // Scan for project directories
+            // FIRST: Check if there's a project directly in the output directory
+            const directSystemPath = path.join(this.outputDir, 'system');
+            const directOrchestratorPath = path.join(directSystemPath, 'orchestrator.md');
+            
+            this.log(`🔍 Checking for direct project at: ${directOrchestratorPath}`);
+            
+            if (fs.existsSync(directOrchestratorPath)) {
+                // Project exists directly in output directory
+                const projectName = path.basename(this.outputDir) || 'main-project';
+                const projectInfo = await this.getProjectInfo(projectName, directOrchestratorPath);
+                projects.push(projectInfo);
+                this.log(`✅ Found direct project: ${projectName}`);
+            } else {
+                this.log(`❌ No orchestrator found at: ${directOrchestratorPath}`);
+            }
+            
+            // THEN: Scan for project subdirectories
             const projectDirs = fs.readdirSync(this.outputDir, { withFileTypes: true })
-                .filter(dirent => dirent.isDirectory())
+                .filter(dirent => dirent.isDirectory() && dirent.name !== 'system' && dirent.name !== 'tasks')
                 .map(dirent => dirent.name);
+            
+            this.log(`📁 Found subdirectories: ${projectDirs.join(', ')}`);
             
             for (const projectDir of projectDirs) {
                 const projectPath = path.join(this.outputDir, projectDir);

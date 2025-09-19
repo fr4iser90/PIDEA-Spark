@@ -1,4 +1,4 @@
-# 🚀 PIDEA-Spark - AI-Powered Game Development Automation
+# 🚀 PIDEA-Spark - AI-Powered Workflow Automation
 
 **PIDEA-Spark** is an intelligent automation system that uses AI to create, plan, and execute workflows with templates on projects through Cursor IDE integration.
 

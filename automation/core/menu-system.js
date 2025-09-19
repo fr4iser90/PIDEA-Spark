@@ -29,6 +29,9 @@ export class MenuSystem {
         console.log('\n🎮 Pidea Spark - Game Automation Menu');
         console.log('=====================================\n');
         
+        // Initialize project detector first
+        await this.projectDetector.initialize();
+        
         // Detect available projects and ideas
         const { projects, ideas } = await this.projectDetector.detectProjects();
         

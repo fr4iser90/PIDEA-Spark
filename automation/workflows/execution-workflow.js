@@ -53,47 +53,8 @@ export class ExecutionWorkflow {
     async executeWorkflow() {
         this.log('🎬 Starting CDP-based automated task execution workflow');
         
-        // PHASE 1: Initial Review
-        this.log('🔍 PHASE 1: Performing initial project review...');
-        const reviewManager = new ReviewManager(this.config, this.log);
-        
-        try {
-            // Generate review prompt
-            const reviewResult = await reviewManager.performInitialReview(this.taskQueue, this.completedTasks, this.failedTasks);
-            
-            if (reviewResult.status === 'error') {
-                this.log('❌ Review phase failed, but continuing with task execution', 'WARNING');
-            } else {
-                // Send review prompt to AI via CDP
-                this.log('🤖 Sending review prompt to AI for analysis...');
-                const reviewResponse = await this.sendToAIviaCDP(reviewResult.prompt);
-                
-                // Process review response
-                const reviewProcessResult = await reviewManager.processReviewResponse(reviewResponse);
-                
-                if (reviewProcessResult.status === 'completed') {
-                    this.log('✅ Review phase completed successfully');
-                    
-                    if (!reviewProcessResult.canProceed) {
-                        this.log('🚨 Review indicates automation should not proceed', 'ERROR');
-                        this.log('Critical issues found that require manual intervention');
-                        return;
-                    }
-                    
-                    // AI has already updated the orchestrator files directly
-                    this.log('✅ AI has updated orchestrator files - reloading task definitions...');
-                    await this.loadTaskDefinitions(); // Reload with updated data
-                } else {
-                    this.log('⚠️ Review processing failed, continuing with original task queue', 'WARNING');
-                }
-            }
-        } catch (error) {
-            this.log(`💥 Error in review phase: ${error.message}`, 'ERROR');
-            this.log('Continuing with task execution...', 'WARNING');
-        }
-        
-        // PHASE 2: Task Execution
-        this.log('🚀 PHASE 2: Starting task execution...');
+        // PHASE 1: Task Execution (Skip Review - Go Directly to Tasks)
+        this.log('🚀 PHASE 1: Starting direct task execution...');
         
         // Process ALL tasks - no safety limit
         let processedTasks = 0;
@@ -192,22 +153,27 @@ export class ExecutionWorkflow {
 
     async executeTaskWithCDP(task) {
         try {
-            // 1. Load task details
-            const taskDetails = await this.loadTaskDetails(task);
+            // 1. Load task index.md file
+            const taskIndexPath = await this.loadTaskIndex(task);
             
-            // 2. Generate prompt
-            const prompt = this.generateExecutionPrompt(task, taskDetails);
+            if (!taskIndexPath) {
+                this.log(`❌ Task index.md not found for task ${task.id}`, 'ERROR');
+                return false;
+            }
             
-            // 3. Send to AI via CDP
-            const response = await this.sendToAIviaCDP(prompt);
+            // 2. Send task execute command with index.md content
+            const taskExecutePrompt = `task execute\n\n${taskIndexPath}`;
             
-            // 4. Validate response using the new class
-            const validation = await this.validateTaskCompletion.validateTaskCompletion(task, response);
+            this.log(`📤 Sending task execute for Task ${task.id}: ${task.name}`);
+            const response = await this.sendToAIviaCDP(taskExecutePrompt);
             
-            // 5. Update task status
-            await this.updateTaskStatus(task, validation.success);
+            // 3. Check if task was completed by looking for completion indicators
+            const isCompleted = await this.checkTaskCompletion(task);
             
-            return validation.success;
+            // 4. Update task status
+            await this.updateTaskStatus(task, isCompleted);
+            
+            return isCompleted;
             
         } catch (error) {
             this.log(`💥 Error in CDP task execution: ${error.message}`, 'ERROR');
@@ -215,20 +181,260 @@ export class ExecutionWorkflow {
         }
     }
 
-    async loadTaskDetails(task) {
-        const taskDir = path.join(
-            this.config.tasksDir,
-            task.category.replace(/\s+/g, '-').toLowerCase(),
-            task.name.replace(/\s+/g, '-').toLowerCase()
-        );
+    async loadTaskIndex(task) {
+        // Map task ID to actual directory name
+        const taskDirName = this.mapTaskIdToDirectory(task.id);
         
-        const implementationFile = path.join(taskDir, `${task.name.replace(/\s+/g, '-').toLowerCase()}-implementation.md`);
-        
-        if (fs.existsSync(implementationFile)) {
-            return fs.readFileSync(implementationFile, 'utf8');
+        if (!taskDirName) {
+            this.log(`❌ Could not map task ${task.id} to directory name`, 'ERROR');
+            return null;
         }
         
-        return `Task: ${task.name}\nCategory: ${task.category}\nTime: ${task.time}\nStatus: ${task.status}`;
+        // Map category to actual directory name
+        const categoryDirName = this.mapCategoryToDirectory(task.category);
+        
+        // Use the full path to the tasks directory (go up from system/ to project root, then to tasks/)
+        const projectRoot = path.dirname(path.dirname(this.config.orchestratorFile));
+        const tasksDir = path.join(projectRoot, 'tasks');
+        
+        // Find the task directory and index.md file
+        const taskDir = path.join(
+            tasksDir,
+            categoryDirName,
+            taskDirName
+        );
+        
+        const indexPath = path.join(taskDir, 'index.md');
+        
+        if (fs.existsSync(indexPath)) {
+            const indexContent = fs.readFileSync(indexPath, 'utf8');
+            this.log(`📁 Found task index: ${indexPath}`);
+            return indexContent;
+        }
+        
+        // Try alternative paths
+        const alternativePaths = [
+            path.join(taskDir, `${taskDirName}-index.md`),
+            path.join(taskDir, 'task-index.md'),
+            path.join(taskDir, 'README.md')
+        ];
+        
+        for (const altPath of alternativePaths) {
+            if (fs.existsSync(altPath)) {
+                const indexContent = fs.readFileSync(altPath, 'utf8');
+                this.log(`📁 Found task index (alternative): ${altPath}`);
+                return indexContent;
+            }
+        }
+        
+        this.log(`❌ No index.md found for task ${task.id} in directory: ${taskDir}`, 'ERROR');
+        return null;
+    }
+
+    mapTaskIdToDirectory(taskId) {
+        // Map task IDs to actual directory names based on the template structure
+        const taskMapping = {
+            // Project Setup (01)
+            '1.1': '01-git-repository-branching',
+            '1.2': '02-project-structure-creation',
+            '1.3': '03-linter-formatter-config',
+            '1.4': '04-build-system-setup',
+            '1.5': '05-package-management',
+            '1.6': '06-code-formatting',
+            '1.7': '07-logging-system',
+            '1.8': '08-config-system',
+            '1.9': '09-documentation',
+            '1.10': '10-ci-cd-skeleton',
+            
+            // Core Engine (02)
+            '2.1': '01-game-loop-basis',
+            '2.2': '02-entity-component-system',
+            '2.3': '03-physics-engine',
+            '2.4': '04-input-handling',
+            '2.5': '05-rendering-pipeline',
+            '2.6': '06-audio-engine',
+            '2.7': '07-ai-pathfinding',
+            '2.8': '08-ai-behavior-trees',
+            '2.9': '09-event-system',
+            '2.10': '10-resource-management',
+            '2.11': '11-serialization',
+            '2.12': '12-plugin-system',
+            '2.13': '13-mod-support',
+            '2.14': '14-performance-benchmarking',
+            '2.15': '15-engine-documentation',
+            
+            // Frontend UI (03)
+            '3.1': '01-ui-framework-setup',
+            '3.2': '02-main-menu',
+            '3.3': '03-hud-implementation',
+            '3.4': '04-settings-menu',
+            '3.5': '05-inventory-ui',
+            '3.6': '06-responsive-design',
+            '3.7': '07-ui-animations',
+            '3.8': '08-localization-ui',
+            '3.9': '09-accessibility',
+            '3.10': '10-ui-testing',
+            
+            // Assets Pipeline (04)
+            '4.1': '01-asset-pipeline-setup',
+            '4.2': '02-asset-loader',
+            '4.3': '03-texture-optimization',
+            '4.4': '04-spritesheet-integration',
+            '4.5': '05-model-importer',
+            '4.6': '06-audio-assets',
+            '4.7': '07-music-system',
+            '4.8': '08-asset-cache',
+            '4.9': '09-asset-versioning',
+            '4.10': '10-asset-testing',
+            
+            // Data Persistence (05)
+            '5.1': '01-save-load-system',
+            '5.2': '02-cloud-save',
+            '5.3': '03-database-integration',
+            '5.4': '04-data-migration',
+            '5.5': '05-data-security',
+            
+            // Multiplayer (06)
+            '6.1': '01-networking-stack',
+            '6.2': '02-client-server-architecture',
+            '6.3': '03-matchmaking',
+            '6.4': '04-lobby-system',
+            '6.5': '05-realtime-sync',
+            '6.6': '06-lag-compensation',
+            '6.7': '07-anti-cheat',
+            '6.8': '08-network-compression',
+            '6.9': '09-multiplayer-testing',
+            '6.10': '10-network-monitoring',
+            
+            // Feature Development (07)
+            '7.1': '01-movement-core',
+            '7.2': '02-combat-core',
+            '7.3': '03-enemy-spawner',
+            '7.4': '04-leveling-system',
+            '7.5': '05-quest-system',
+            '7.6': '06-crafting-system',
+            '7.7': '07-inventory-logic',
+            '7.8': '08-npc-dialog',
+            '7.9': '09-boss-mechanics',
+            '7.10': '10-skill-trees',
+            '7.11': '11-special-abilities',
+            '7.12': '12-environmental-hazards',
+            '7.13': '13-achievement-system',
+            '7.14': '14-replay-system',
+            '7.15': '15-sandbox-features',
+            
+            // Testing (08)
+            '8.1': '01-unit-test-setup',
+            '8.2': '02-core-engine-tests',
+            '8.3': '03-integration-tests',
+            '8.4': '04-multiplayer-tests',
+            '8.5': '05-ui-tests',
+            '8.6': '06-load-stress-tests',
+            '8.7': '07-security-tests',
+            '8.8': '08-final-test-suite',
+            
+            // Deployment (09)
+            '9.1': '01-build-scripts',
+            '9.2': '02-ci-cd-pipeline',
+            '9.3': '03-platform-packaging',
+            '9.4': '04-distribution-setup',
+            '9.5': '05-auto-updater',
+            
+            // Monitoring (10)
+            '10.1': '01-monitoring-dashboard',
+            '10.2': '02-crash-reporting',
+            '10.3': '03-analytics-integration',
+            '10.4': '04-feedback-system',
+            '10.5': '05-patch-management',
+            '10.6': '06-content-pipeline',
+            '10.7': '07-community-tools',
+            
+            // Genre Specific (11)
+            '11.1': '01-genre-core-mechanics',
+            '11.2': '02-genre-ui-elements',
+            '11.3': '03-genre-asset-integration',
+            '11.4': '04-genre-balancing',
+            '11.5': '05-genre-testing',
+            '11.6': '06-genre-performance',
+            '11.7': '07-genre-accessibility',
+            '11.8': '08-genre-localization',
+            '11.9': '09-genre-multiplayer',
+            '11.10': '10-genre-final-polish'
+        };
+        
+        return taskMapping[taskId] || null;
+    }
+
+    mapCategoryToDirectory(category) {
+        // Map category names from orchestrator to actual directory names
+        const categoryMapping = {
+            'project-setup': '01-project-setup',
+            'core-engine': '02-core-engine',
+            'frontend-ui': '03-frontend-ui',
+            'assets-pipeline': '04-assets-pipeline',
+            'data-persistence': '05-data-persistence',
+            'multiplayer': '06-multiplayer-networking',
+            'feature-dev': '07-feature-development',
+            'testing': '08-testing',
+            'deployment': '09-deployment-distribution',
+            'monitoring': '10-monitoring-analytics',
+            'genre-specific': '11-genre-specific'
+        };
+        
+        return categoryMapping[category] || category.replace(/\s+/g, '-').toLowerCase();
+    }
+
+    async checkTaskCompletion(task) {
+        // Map task ID to actual directory name
+        const taskDirName = this.mapTaskIdToDirectory(task.id);
+        
+        if (!taskDirName) {
+            this.log(`❌ Could not map task ${task.id} to directory name for completion check`, 'ERROR');
+            return false;
+        }
+        
+        // Map category to actual directory name
+        const categoryDirName = this.mapCategoryToDirectory(task.category);
+        
+        // Use the full path to the tasks directory (go up from system/ to project root, then to tasks/)
+        const projectRoot = path.dirname(path.dirname(this.config.orchestratorFile));
+        const tasksDir = path.join(projectRoot, 'tasks');
+        
+        // Check if task was completed by looking at the index.md file
+        const taskDir = path.join(
+            tasksDir,
+            categoryDirName,
+            taskDirName
+        );
+        
+        const indexPath = path.join(taskDir, 'index.md');
+        
+        if (fs.existsSync(indexPath)) {
+            const indexContent = fs.readFileSync(indexPath, 'utf8');
+            
+            // Look for completion indicators
+            const completionIndicators = [
+                'Status: ✅ Completed',
+                'Status: Completed',
+                'Progress: 100%',
+                'Overall Progress: 100%',
+                '✅ Task completed',
+                'Task completed successfully'
+            ];
+            
+            for (const indicator of completionIndicators) {
+                if (indexContent.includes(indicator)) {
+                    this.log(`✅ Task ${task.id} appears to be completed (found: ${indicator})`);
+                    return true;
+                }
+            }
+            
+            this.log(`⚠️ Task ${task.id} may not be completed yet`);
+            return false;
+        }
+        
+        this.log(`❌ Cannot check completion - index.md not found for task ${task.id}`, 'ERROR');
+        return false;
     }
 
     generateExecutionPrompt(task, taskDetails) {
@@ -372,6 +578,55 @@ ${this.failedTasks.length > 0 ?
     // Setter for task queue
     setTaskQueue(taskQueue) {
         this.taskQueue = taskQueue;
+    }
+
+    // NEW: List tasks method
+    async listTasks() {
+        this.log('📋 Listing tasks');
+        
+        if (this.taskQueue.length === 0) {
+            this.log('❌ No tasks loaded', 'ERROR');
+            return;
+        }
+        
+        console.log('\n📋 Available Tasks:');
+        console.log('==================\n');
+        
+        for (const task of this.taskQueue) {
+            const status = task.status || '📋 Ready';
+            const progress = task.progress || '0%';
+            console.log(`${task.id.toString().padStart(2)}. ${task.name.padEnd(40)} ${status} (${progress})`);
+        }
+    }
+
+    // NEW: Execute specific task method
+    async executeSpecificTask(taskId) {
+        this.log(`🎯 Executing specific task: ${taskId}`);
+        
+        const task = this.taskQueue.find(t => t.id === taskId);
+        if (!task) {
+            this.log(`❌ Task ${taskId} not found`, 'ERROR');
+            return;
+        }
+        
+        try {
+            const success = await this.executeTaskWithCDP(task);
+            
+            if (success) {
+                this.completedTasks.push(task);
+                this.log(`✅ Task ${taskId} completed successfully`);
+            } else {
+                this.failedTasks.push(task);
+                this.log(`❌ Task ${taskId} failed`);
+            }
+            
+            // Update progress
+            await this.updateProgress();
+            
+        } catch (error) {
+            this.log(`💥 Error executing task ${taskId}: ${error.message}`, 'ERROR');
+            this.failedTasks.push(task);
+        }
     }
 }
 

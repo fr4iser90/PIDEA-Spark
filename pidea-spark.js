@@ -142,7 +142,7 @@ class CDPTaskAutomationWorkflow {
             this.log(`🎯 Using Cursor workspace: ${workspaceInfo.workspacePath}`);
             // Update config to use workspace paths
             this.config.projectRoot = workspaceInfo.workspacePath;
-            this.config.tasksDir = workspaceInfo.outputDir;
+            this.config.tasksDir = path.join(workspaceInfo.outputDir, 'tasks');
         } else {
             this.log(`⚠️ Using local directory (Cursor workspace not found)`);
         }
@@ -220,17 +220,26 @@ class CDPTaskAutomationWorkflow {
         
         const workspaceInfo = projectDetector.getWorkspaceInfo();
         
+        // Fix: choice.project.path points to orchestrator.md, we need the project directory
+        const projectDir = path.dirname(path.dirname(choice.project.path)); // Go up from system/orchestrator.md to project root
+        const projectName = path.basename(projectDir);
+        
+        // Special case: if project is directly in pidea-spark-output, use the output directory
+        if (projectName === 'pidea-spark-output') {
+            // Project is directly in output directory, not in a subdirectory
+            this.log(`🎯 Project is directly in output directory`);
+        }
+        
         // Update project paths based on workspace detection
         if (workspaceInfo.isInWorkspace) {
-            // Use the specific project path, not just workspace root
-            const projectPath = choice.project.path;
-            this.config.orchestratorFile = path.join(projectPath, 'system', 'orchestrator.md');
-            this.config.progressFile = path.join(projectPath, 'system', 'progress-tracker.md');
-            this.log(`🎯 Using workspace project: ${projectPath}`);
+            // Use the project directory path
+            this.config.orchestratorFile = path.join(projectDir, 'system', 'orchestrator.md');
+            this.config.progressFile = path.join(projectDir, 'system', 'progress-tracker.md');
+            this.log(`🎯 Using workspace project: ${projectDir}`);
         } else {
-            this.config.orchestratorFile = path.join(choice.project.path, 'system', 'orchestrator.md');
-            this.config.progressFile = path.join(choice.project.path, 'system', 'progress-tracker.md');
-            this.log(`⚠️ Using local project (workspace not found)`);
+            this.config.orchestratorFile = path.join(projectDir, 'system', 'orchestrator.md');
+            this.config.progressFile = path.join(projectDir, 'system', 'progress-tracker.md');
+            this.log(`⚠️ Using local project (workspace not found): ${projectDir}`);
         }
         
         // Create new ExecutionWorkflow instance
@@ -867,7 +876,7 @@ class CDPTaskAutomationWorkflow {
         }
     }
 
-    // NEW: Execute specific task
+    // NEW: Execute specific task - Now uses ExecutionWorkflow
     async executeSpecificTask(taskId) {
         this.log(`🎯 Executing specific task: ${taskId}`);
         
@@ -883,47 +892,45 @@ class CDPTaskAutomationWorkflow {
             this.log(`⚠️ Using local directory (Cursor workspace not found)`);
         }
         
-        const task = this.taskQueue.find(t => t.id === taskId);
-        if (!task) {
-            this.log(`❌ Task ${taskId} not found`, 'ERROR');
-            return;
-        }
+        // Create new ExecutionWorkflow instance
+        const executionWorkflow = new ExecutionWorkflow(this.config, this.log);
         
-        await this.initializeBrowser();
-        await this.executeTaskWithCDP(task);
+        // Load task definitions
+        await executionWorkflow.loadTaskDefinitions();
+        executionWorkflow.buildDependencyGraph();
+        await executionWorkflow.initializeBrowser();
+        
+        // Execute specific task using ExecutionWorkflow
+        await executionWorkflow.executeSpecificTask(taskId);
     }
 
-    // NEW: List tasks
+    // NEW: List tasks - Now uses ExecutionWorkflow
     async listTasks() {
         this.log('📋 Listing tasks');
         
-        if (this.taskQueue.length === 0) {
-            // Initialize with workspace detection if not already done
-            const { ProjectDetector } = await import('./automation/core/project-detector.js');
-            const projectDetector = new ProjectDetector(this.config);
-            await projectDetector.initialize();
-            
-            const workspaceInfo = projectDetector.getWorkspaceInfo();
-            if (workspaceInfo.isInWorkspace) {
-                this.log(`🎯 Using Cursor workspace: ${workspaceInfo.workspacePath}`);
-            } else {
-                this.log(`⚠️ Using local directory (Cursor workspace not found)`);
-            }
-            
-            await this.loadTaskDefinitions();
+        // Initialize with workspace detection if not already done
+        const { ProjectDetector } = await import('./automation/core/project-detector.js');
+        const projectDetector = new ProjectDetector(this.config);
+        await projectDetector.initialize();
+        
+        const workspaceInfo = projectDetector.getWorkspaceInfo();
+        if (workspaceInfo.isInWorkspace) {
+            this.log(`🎯 Using Cursor workspace: ${workspaceInfo.workspacePath}`);
+        } else {
+            this.log(`⚠️ Using local directory (Cursor workspace not found)`);
         }
         
-        console.log('\n📋 Available Tasks:');
-        console.log('==================\n');
+        // Create new ExecutionWorkflow instance
+        const executionWorkflow = new ExecutionWorkflow(this.config, this.log);
         
-        for (const task of this.taskQueue) {
-            const status = task.status || '📋 Ready';
-            const progress = task.progress || '0%';
-            console.log(`${task.id.toString().padStart(2)}. ${task.name.padEnd(40)} ${status} (${progress})`);
-        }
+        // Load task definitions
+        await executionWorkflow.loadTaskDefinitions();
+        
+        // List tasks using ExecutionWorkflow
+        await executionWorkflow.listTasks();
     }
 
-    // NEW: Execute workflow
+    // NEW: Execute workflow - Now uses the proper ExecutionWorkflow
     async executeWorkflow() {
         this.log('🚀 Starting workflow execution');
         
@@ -941,59 +948,41 @@ class CDPTaskAutomationWorkflow {
         
         // If we have a current project, use its orchestrator path
         if (this.currentProject && this.currentProject.path) {
-            this.config.orchestratorFile = path.join(this.currentProject.path, 'system', 'orchestrator.md');
-            this.config.progressFile = path.join(this.currentProject.path, 'system', 'progress-tracker.md');
+            // Fix: currentProject.path points to orchestrator.md, we need the project directory
+            const projectDir = path.dirname(path.dirname(this.currentProject.path)); // Go up from system/orchestrator.md to project root
+            this.config.orchestratorFile = path.join(projectDir, 'system', 'orchestrator.md');
+            this.config.progressFile = path.join(projectDir, 'system', 'progress-tracker.md');
             this.log(`🎯 Using project orchestrator: ${this.config.orchestratorFile}`);
         }
         
-        // Load tasks if not already loaded
-        if (this.taskQueue.length === 0) {
-            await this.loadTaskDefinitions();
-            this.buildDependencyGraph();
-        }
+        // Create new ExecutionWorkflow instance and use it properly
+        const executionWorkflow = new ExecutionWorkflow(this.config, this.log);
         
-        // Initialize browser if not already done
-        if (!this.browser) {
-            await this.initializeBrowser();
-        }
+        // Load task definitions
+        await executionWorkflow.loadTaskDefinitions();
+        executionWorkflow.buildDependencyGraph();
+        await executionWorkflow.initializeBrowser();
         
-        // Execute all tasks
-        for (const task of this.taskQueue) {
-            try {
-                this.log(`🎯 Executing task: ${task.name}`);
-                await this.executeTaskWithCDP(task);
-                this.completedTasks.push(task);
-            } catch (error) {
-                this.log(`❌ Error executing task ${task.name}: ${error.message}`, 'ERROR');
-                this.failedTasks.push(task);
-            }
-        }
+        // Execute the workflow using the proper ExecutionWorkflow
+        await executionWorkflow.executeWorkflow();
         
-        this.log(`✅ Workflow completed. ${this.completedTasks.length} successful, ${this.failedTasks.length} failed`);
+        this.log(`✅ Workflow completed using proper ExecutionWorkflow`);
     }
 
-    // NEW: Set start from task ID
+    // NEW: Set start from task ID - Now uses ExecutionWorkflow
     setStartFromTaskId(taskId) {
         this.log(`🎯 Setting start point to task: ${taskId}`);
         
-        const startIndex = this.taskQueue.findIndex(t => t.id === taskId);
-        if (startIndex === -1) {
-            this.log(`❌ Task ${taskId} not found`, 'ERROR');
-            return;
-        }
+        // Create new ExecutionWorkflow instance
+        const executionWorkflow = new ExecutionWorkflow(this.config, this.log);
         
-        // Filter tasks to start from the specified task
-        this.taskQueue = this.taskQueue.slice(startIndex);
-        this.log(`✅ Will start execution from task ${taskId}: ${this.taskQueue[0].name}`);
+        // Set start from task ID using ExecutionWorkflow
+        executionWorkflow.setStartFromTaskId(taskId);
+        
+        this.log(`✅ Start point set to task ${taskId} using ExecutionWorkflow`);
     }
 
-    // NEW: Execute task with CDP (placeholder - to be implemented)
-    async executeTaskWithCDP(task) {
-        this.log(`🔧 Executing task with CDP: ${task.name}`);
-        // TODO: Implement actual CDP task execution
-        await this.delay(1000); // Simulate task execution
-        this.log(`✅ Task completed: ${task.name}`);
-    }
+    // REMOVED: executeTaskWithCDP - Now handled by ExecutionWorkflow
 
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
